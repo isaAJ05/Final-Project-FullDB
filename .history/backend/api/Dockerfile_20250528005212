@@ -1,0 +1,20 @@
+# Imagen base oficial de Node.js
+FROM node:20
+
+# Directorio de trabajo dentro del contenedor
+WORKDIR /app
+
+# Copiar package.json y package-lock.json (si existe)
+COPY package*.json ./
+
+# Instalar dependencias
+RUN npm install
+
+# Copiar el resto del código de la API
+COPY . .
+
+# Exponer el puerto que usará el servidor (debe coincidir con server.js)
+EXPOSE 8000
+
+# Comando para ejecutar el servidor
+CMD ["npm", "start"]
