@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import AceEditor from "react-ace";
+
+// Importar modo SQL y tema
+import "ace-builds/src-noconflict/mode-sql";
+import "ace-builds/src-noconflict/theme-monokai";
 
 function App() {
   const [query, setQuery] = useState('');
@@ -185,12 +190,12 @@ function App() {
               ) : result ? (
                 <pre>{JSON.stringify(result, null, 2)}</pre>
               ) : (
-                'Aquí se mostrarán las tablas o gráficos'
+                'Tablas y Resultados.'
               )}
             </div>
 
             <div className="errors-panel">
-              {error ? error : 'Mensajes de error'}
+              {error ? error : 'Output'}
             </div>
           </div>
         </div>

@@ -1,10 +1,12 @@
 /* General container */
+
+
 .app-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
   font-family: 'Segoe UI', sans-serif;
-  background-color: #1e1e2f;
+  background-color: #13132b;
   color: #f0f0f0;
 }
 
@@ -13,8 +15,8 @@
   display: flex;
   align-items: center;
   padding: 1px 20px;
-  border-bottom: 1px solid #333;
-  background: radial-gradient(circle, #3d1496 40%, #261054 100%);
+  border-bottom: 0px solid #333;
+  background: radial-gradient(circle, #9b0018 40%, #680010 100%);
   color: #fff;
 }
 
@@ -38,7 +40,7 @@
   top: 75px;
   bottom: 0;
   width: 200px;
-  background-color: #2a2a3b;
+  background-color: #181c27;
   padding: 10px;
   overflow-y: auto;
   transform: translateX(-100%);
@@ -62,7 +64,7 @@
   width: 100%;
   margin: 5px 0;
   padding: 8px;
-  background-color: #4caf50;
+  background-color: #9b0018;
   border: none;
   color: #fff;
   text-align: left;
@@ -73,7 +75,7 @@
   font-size: 14px;
 }
 .history-btn:hover {
-  background-color: #45a045;
+  background-color: #680010;
 }
 
 /* Main layout split */
@@ -93,7 +95,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background-color: #232334;
+  background-color: #181c27;
 }
 
 .query-input textarea {
@@ -103,13 +105,16 @@
   padding: 10px;
   box-sizing: border-box;
   font-size: 16px;
-  background-color: #1a1a2b;
+  background-color: #0f131c;
   color: #ffffff;
-  border: 1px solid #ffffff;
-  border-radius: 5px;
+  border: 1px solid #9b0018;
+  border-radius: 8px;
   font-family: 'Segoe UI', sans-serif;
 }
-
+.query-input textarea:focus {
+  outline: none;
+  border-color: #680010;
+}
 .query-input .buttons-row {
   display: flex;
   gap: 10px;
@@ -119,7 +124,7 @@
 .query-input button,
 .upload-btn {
   padding: 10px 20px;
-  background-color: #4caf50;
+  background-color: #9b0018;
   color: white;
   border: none;
   border-radius: 6px;
@@ -130,7 +135,7 @@
 }
 .query-input button:hover,
 .upload-btn:hover {
-  background-color: #45a045;
+  background-color: #680010;
 }
 
 /* Ocultar input file */
@@ -143,7 +148,7 @@
   flex: 2;
   display: flex;
   flex-direction: column;
-  background-color: #1e1e2f;
+  background-color: #181c27;
   height: 100%;
 }
 
@@ -152,20 +157,23 @@
   flex: 1;
   padding: 15px;
   box-sizing: border-box;
-  overflow: auto;
-  background-color: #282840;
-  border: 1px solid #3ca56c;
+  overflow-x: auto;
+  overflow-y: auto;
+  background-color: #0f131c; 
+  border: 1px solid #9b0018;
   border-radius: 8px;
   margin: 10px 10px 0 10px;
   box-shadow: 0 0 8px rgba(60, 165, 108, 0.2);
+  white-space: nowrap;
 }
 
 .results-panel table {
-  width: 100%;
-  table-layout: fixed;
+  min-width: max-content;
   border-collapse: collapse;
+  
   color: #fff;
 }
+
 
 .results-panel th,
 .results-panel td {
@@ -178,23 +186,23 @@
 }
 
 .results-panel th {
-  background-color: #3d3d5c;
+  background-color: #181c27;
 }
 
 /* Panel de errores */
 .errors-panel {
-  height: 170px;
+  height: 120px;
   flex: none; 
   padding: 15px;
   box-sizing: border-box;
   overflow-y: auto;
-  background-color: #3a1e1e;
-  border: 1px solid #d9534f;
+  background-color: #0f131c;
+  border: 1px solid #9b0018;
   border-radius: 8px;
   margin: 10px;
-  margin-bottom: 55px;
-  color: #f8d7da;
-  box-shadow: 0 0 8px rgba(217, 83, 79, 0.2);
+  margin-bottom: 58px;
+  color: #ffffff;
+   box-shadow: 0 0 8px rgba(60, 165, 108, 0.2);
 }
 
 /* Mensaje de éxito */
@@ -227,11 +235,32 @@
 }
 
 .resizer {
-  width: 5px;
+  width: 3px;
   cursor: col-resize;
   background-color: #555;
   transition: background-color 0.2s;
 }
 .resizer:hover {
   background-color: #888;
+}
+/* Para navegadores basados en WebKit (Chrome, Edge, Opera) */
+.results-panel::-webkit-scrollbar {
+  height: 14px; /* Altura del scrollbar horizontal */
+  width: 13px;  /* Ancho del scrollbar vertical */
+  
+}
+
+.results-panel::-webkit-scrollbar-track {
+  background: #1e1e2e; /* Color del track (fondo del scroll) */
+  border-radius: 100px;
+}
+
+.results-panel::-webkit-scrollbar-thumb {
+  background-color: #9b0018; /* Color del "botón" del scroll */
+  border-radius: 8px;
+  border: 3px solid #1e1e2e; /* Espacio entre el scroll y el fondo */
+}
+
+.results-panel::-webkit-scrollbar-thumb:hover {
+  background-color: #680010; /* Color más claro al pasar el mouse */
 }
