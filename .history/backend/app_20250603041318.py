@@ -215,11 +215,10 @@ def executor(plan, stmt_type, query, data, stmt_info):
             table_data = load_table(db, table)
             if not table_data:
                 raise ValueError(f'Tabla {table} no existe en base {db}')
-            if stmt_info["columns"] == ["*"]:
-                # Devuelve todas las columnas
-                result = [row for row in table_data["rows"]]
-            else:
+            if stmt_info["columns"]:
                 result = [{col: row.get(col) for col in stmt_info["columns"]} for row in table_data["rows"]]
+            else:
+                result = table_data["rows"]
             query_cache[query] = {"columns": table_data["columns"], "rows": result}
             return {"source": "executed", "columns": table_data["columns"], "rows": result}
     

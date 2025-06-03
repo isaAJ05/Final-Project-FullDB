@@ -46,37 +46,10 @@ def backup_table(db, table, data):
         json.dump(data, f)
 
 def parse_db_table(full_name):
-    # Elimina alias si existe (por ejemplo: "tienda.clientes AS c" -> "tienda.clientes")
-    full_name = full_name.split(" AS ")[0].split(" as ")[0].strip()
     parts = full_name.split('.')
     if len(parts) == 2:
         return parts[0], parts[1]
     return None, parts[0]
-
-def join_tables(left_rows, right_rows, left_key, right_key):
-    result = []
-    for l in left_rows:
-        for r in right_rows:
-            if str(l.get(left_key)) == str(r.get(right_key)):
-                combined = {**l, **r}
-                result.append(combined)
-    return result
-
-def group_by_agg(rows, group_col, agg_col, agg_func):
-    groups = {}
-    for row in rows:
-        key = row[group_col]
-        groups.setdefault(key, []).append(row)
-    result = []
-    for key, group_rows in groups.items():
-        if agg_func == "SUM":
-            agg_value = sum(float(r[agg_col]) for r in group_rows)
-        elif agg_func == "COUNT":
-            agg_value = len(group_rows)
-        else:
-            agg_value = None
-        result.append({group_col: key, f"{agg_func.lower()}_{agg_col}": agg_value})
-    return result
 
 
 # ==========================
@@ -96,48 +69,9 @@ def parser(query):
     return parsed[0]
 
 def algebrizer(stmt):
-    """
-    Etapa 2: Algebrizer mejorado.
-    Extrae tipo de sentencia, tablas, columnas, joins y group by del AST de sqlglot.
-    """
-    info = {
-        "type": stmt.key.upper(),
-        "tables": [],
-        "columns": [],
-        "joins": [],
-        "group_by": [],
-        "aggregates": []
-    }
-    # Tablas principales
-    if hasattr(stmt, "args") and "from" in stmt.args and stmt.args["from"]:
-        main_table = stmt.args["from"].args["this"]
-        info["tables"].append(str(main_table))
-    # Columnas seleccionadas y agregaciones
-    if hasattr(stmt, "args") and "expressions" in stmt.args and stmt.args["expressions"]:
-        for expr in stmt.args["expressions"]:
-            if expr.key.upper() in ("SUM", "COUNT"):
-                info["aggregates"].append({
-                    "func": expr.key.upper(),
-                    "col": str(expr.args["this"]),
-                    "alias": getattr(expr, "alias", None)
-                })
-            else:
-                info["columns"].append(getattr(expr, "alias", None) or getattr(expr, "name", None) or str(expr))
-    # Joins
-    if hasattr(stmt, "args") and "joins" in stmt.args and stmt.args["joins"]:
-        for join in stmt.args["joins"]:
-            join_table = join.args["this"]
-            on_expr = join.args["on"]
-            info["joins"].append({
-                "table": str(join_table),
-                "on_left": str(on_expr.args["this"]),
-                "on_right": str(on_expr.args["expression"])
-            })
-    # Group by
-    if hasattr(stmt, "args") and "group" in stmt.args and stmt.args["group"]:
-        for gexpr in stmt.args["group"].expressions:
-            info["group_by"].append(str(gexpr))
-    return info
+    """Etapa 2: Algebrizer - Extrae tipo de sentencia."""
+    stmt_type = stmt.get_type()
+    return stmt_type
 
 def optimizer(stmt_type, query):
     """Etapa 3: Optimizer/Planner - Usa caché para SELECT, plan simple para otros."""
@@ -145,84 +79,12 @@ def optimizer(stmt_type, query):
         return {"plan": "cache", "cached_result": query_cache[query]}
     return {"plan": "execute", "query": query}
 
-def executor(plan, stmt_type, query, data, stmt_info):
+def executor(plan, stmt_type, query, data):
     """Etapa 4: Executor - Ejecuta el plan (toda tu lógica real aquí)."""
     # SELECT con caché
     if plan.get("plan") == "cache":
         return {"source": "cache", **plan["cached_result"]}
 
-    # --- Lógica para SELECT usando stmt_info ---
-    if stmt_type == "SELECT":
-        # JOIN simple
-        if stmt_info["joins"]:
-            main_table = stmt_info["tables"][0]
-            join = stmt_info["joins"][0]
-            join_table = join["table"]
-            left_col = join["on_left"].split(".")[-1]
-            right_col = join["on_right"].split(".")[-1]
-            db1, t1 = parse_db_table(main_table)
-            db2, t2 = parse_db_table(join_table)
-            rows1 = load_table(db1, t1)["rows"]
-            rows2 = load_table(db2, t2)["rows"]
-            joined = join_tables(rows1, rows2, left_col, right_col)
-
-            # Si hay GROUP BY, agrupa sobre el resultado del JOIN
-            if stmt_info["group_by"]:
-                group_cols = [col for col in stmt_info["group_by"]]
-                result = []
-                groups = {}
-                for row in joined:
-                    key = tuple(row[col.split(".")[-1]] for col in group_cols)
-                    groups.setdefault(key, []).append(row)
-                for key, group_rows in groups.items():
-                    result_row = {col.split(".")[-1]: val for col, val in zip(group_cols, key)}
-                    for agg in stmt_info["aggregates"]:
-                        agg_func = agg["func"]
-                        agg_col = agg["col"].split(".")[-1]
-                        alias = agg["alias"] or f"{agg_func.lower()}_{agg_col}"
-                        if agg_func == "SUM":
-                            agg_value = sum(float(r.get(agg_col, 0)) for r in group_rows)
-                        elif agg_func == "COUNT":
-                            agg_value = len(group_rows)
-                        else:
-                            agg_value = None
-                        result_row[alias] = agg_value
-                    result.append(result_row)
-                return {"source": "executed", "rows": result}
-
-            # Si no hay GROUP BY, solo selecciona columnas del JOIN
-            result = []
-            for row in joined:
-                result_row = {}
-                for col in stmt_info["columns"]:
-                    if "." in col:
-                        _, real_col = col.split(".", 1)
-                    else:
-                        real_col = col
-                    result_row[col] = row.get(real_col)
-                for agg in stmt_info["aggregates"]:
-                    alias = agg["alias"] or f"{agg['func'].lower()}_{agg['col']}"
-                    if agg["func"] == "SUM":
-                        result_row[alias] = float(row.get(agg["col"], 0))
-                    elif agg["func"] == "COUNT":
-                        result_row[alias] = 1
-                result.append(result_row)
-            return {"source": "executed", "rows": result}
-
-        # SELECT simple (sin JOIN ni GROUP BY)
-        if stmt_info["tables"]:
-            db, table = parse_db_table(stmt_info["tables"][0])
-            table_data = load_table(db, table)
-            if not table_data:
-                raise ValueError(f'Tabla {table} no existe en base {db}')
-            if stmt_info["columns"] == ["*"]:
-                # Devuelve todas las columnas
-                result = [row for row in table_data["rows"]]
-            else:
-                result = [{col: row.get(col) for col in stmt_info["columns"]} for row in table_data["rows"]]
-            query_cache[query] = {"columns": table_data["columns"], "rows": result}
-            return {"source": "executed", "columns": table_data["columns"], "rows": result}
-    
     # CREATE DATABASE
     if query.lower().startswith("create database"):
         match = re.match(r"create database (\w+)", query, re.IGNORECASE)
@@ -237,63 +99,6 @@ def executor(plan, stmt_type, query, data, stmt_info):
         os.makedirs(db_path, exist_ok=True)
         query_cache.clear()
         return {'message': f'Base de datos {db_name} creada'}
-    
-    # SHOW DATABASES
-    if query.lower().startswith("show databases"):
-        dbs = [d for d in os.listdir(DATA_DIR) if os.path.isdir(os.path.join(DATA_DIR, d))]
-        return {'databases': dbs}
-    
-    # RENAME DATABASE
-    if query.lower().startswith("rename database"):
-        match = re.match(r"rename database (\w+) to (\w+)", query, re.IGNORECASE)
-        if not match:
-            raise ValueError('Sintaxis inválida para RENAME DATABASE. Usa RENAME DATABASE db_antigua TO db_nueva')
-        old_db, new_db = match.groups()
-        if not is_valid_name(old_db) or not is_valid_name(new_db):
-            raise ValueError('Nombre de base de datos inválido')
-        old_path = os.path.join(DATA_DIR, old_db)
-        new_path = os.path.join(DATA_DIR, new_db)
-        if not os.path.exists(old_path):
-            raise ValueError(f'La base de datos {old_db} no existe')
-        if os.path.exists(new_path):
-            raise ValueError(f'La base de datos {new_db} ya existe')
-        os.rename(old_path, new_path)
-        query_cache.clear()
-        return {'message': f'Base de datos {old_db} renombrada a {new_db}'}
-    
-    # DROP DATABASE
-    if query.lower().startswith("drop database"):
-        match = re.match(r"drop database (\w+)", query, re.IGNORECASE)
-        if not match:
-            raise ValueError('Sintaxis inválida para DROP DATABASE')
-        db_name = match.group(1)
-        if not is_valid_name(db_name):
-            raise ValueError('Nombre de base de datos inválido')
-        db_path = os.path.join(DATA_DIR, db_name)
-        if not os.path.exists(db_path):
-            raise ValueError(f'La base de datos {db_name} no existe')
-        shutil.rmtree(db_path)
-        query_cache.clear()
-        return {'message': f'Base de datos {db_name} eliminada'}
-
-    # CREATE TABLE
-    if query.lower().startswith("create table"):
-        match = re.match(r"create table (\w+\.\w+|\w+) \((.+)\)", query, re.IGNORECASE)
-        if not match:
-            raise ValueError('Sintaxis inválida para CREATE TABLE')
-        full_table, columns = match.groups()
-        db, table = parse_db_table(full_table)
-        if not db or not is_valid_name(db) or not is_valid_name(table):
-            raise ValueError('Nombre de base de datos o tabla inválido')
-        columns = [col.strip().split()[0] for col in columns.split(',')]
-        if len(set(columns)) != len(columns):
-            raise ValueError('No puede haber columnas repetidas')
-        table_path = os.path.join(DATA_DIR, db, f"{table}.json")
-        if os.path.exists(table_path):
-            raise ValueError(f'La tabla {table} ya existe en base {db}')
-        save_table(db, table, {"columns": columns, "rows": []})
-        query_cache.clear()
-        return {'message': f'Tabla {table} creada en base {db} con columnas {columns}'}   
 
     # DROP TABLE
     if query.lower().startswith("drop table"):
@@ -330,6 +135,25 @@ def executor(plan, stmt_type, query, data, stmt_info):
         os.rename(old_path, new_path)
         query_cache.clear()
         return {'message': f'Tabla {table} renombrada a {table_new} en base {db}'}
+
+    # CREATE TABLE
+    if query.lower().startswith("create table"):
+        match = re.match(r"create table (\w+\.\w+|\w+) \((.+)\)", query, re.IGNORECASE)
+        if not match:
+            raise ValueError('Sintaxis inválida para CREATE TABLE')
+        full_table, columns = match.groups()
+        db, table = parse_db_table(full_table)
+        if not db or not is_valid_name(db) or not is_valid_name(table):
+            raise ValueError('Nombre de base de datos o tabla inválido')
+        columns = [col.strip().split()[0] for col in columns.split(',')]
+        if len(set(columns)) != len(columns):
+            raise ValueError('No puede haber columnas repetidas')
+        table_path = os.path.join(DATA_DIR, db, f"{table}.json")
+        if os.path.exists(table_path):
+            raise ValueError(f'La tabla {table} ya existe en base {db}')
+        save_table(db, table, {"columns": columns, "rows": []})
+        query_cache.clear()
+        return {'message': f'Tabla {table} creada en base {db} con columnas {columns}'}
 
     # INSERT
     if query.lower().startswith("insert into"):
@@ -410,6 +234,29 @@ def executor(plan, stmt_type, query, data, stmt_info):
         query_cache.clear()
         return {'message': f'{deleted} filas eliminadas de {table} en {db}'}
 
+    # SELECT (sin caché)
+    if query.lower().startswith("select"):
+        match = re.match(r"select (.+) from (\w+\.\w+|\w+)", query, re.IGNORECASE)
+        if not match:
+            raise ValueError('Sintaxis inválida para SELECT')
+        columns, full_table = match.groups()
+        db, table = parse_db_table(full_table)
+        if not db or not is_valid_name(db) or not is_valid_name(table):
+            raise ValueError('Nombre de base de datos o tabla inválido')
+        table_data = load_table(db, table)
+        if not table_data:
+            raise ValueError(f'Tabla {table} no existe en base {db}')
+        if columns.strip() == "*":
+            result = table_data["rows"]
+        else:
+            cols = [c.strip() for c in columns.split(',')]
+            for col in cols:
+                if col not in table_data["columns"]:
+                    raise ValueError(f'Columna {col} no existe en la tabla {table}')
+            result = [{col: row.get(col) for col in cols} for row in table_data["rows"]]
+        # Guarda en caché el resultado
+        query_cache[query] = {"columns": table_data["columns"], "rows": result}
+        return {"source": "executed", "columns": table_data["columns"], "rows": result}
 
     raise ValueError('Solo se soportan CREATE TABLE, INSERT, SELECT, UPDATE y DELETE básicos con db.tabla')
 
@@ -429,14 +276,13 @@ def execute_sql():
         # 1. Parser
         stmt = parser(query)
         # 2. Algebrizer
-        stmt_info = algebrizer(stmt)
-        stmt_type = stmt_info["type"]
-        if stmt_type not in ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'COMMAND']:
+        stmt_type = algebrizer(stmt)
+        if stmt_type not in ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP']:
             return jsonify({'error': f'Tipo de consulta no soportado: {stmt_type}'}), 400
         # 3. Optimizer/Planner (incluye caché)
         plan = optimizer(stmt_type, query)
         # 4. Executor
-        result = executor(plan, stmt_type, query, data, stmt_info)
+        result = executor(plan, stmt_type, query, data)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 400

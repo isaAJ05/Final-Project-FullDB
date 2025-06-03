@@ -46,8 +46,6 @@ def backup_table(db, table, data):
         json.dump(data, f)
 
 def parse_db_table(full_name):
-    # Elimina alias si existe (por ejemplo: "tienda.clientes AS c" -> "tienda.clientes")
-    full_name = full_name.split(" AS ")[0].split(" as ")[0].strip()
     parts = full_name.split('.')
     if len(parts) == 2:
         return parts[0], parts[1]
@@ -96,48 +94,8 @@ def parser(query):
     return parsed[0]
 
 def algebrizer(stmt):
-    """
-    Etapa 2: Algebrizer mejorado.
-    Extrae tipo de sentencia, tablas, columnas, joins y group by del AST de sqlglot.
-    """
-    info = {
-        "type": stmt.key.upper(),
-        "tables": [],
-        "columns": [],
-        "joins": [],
-        "group_by": [],
-        "aggregates": []
-    }
-    # Tablas principales
-    if hasattr(stmt, "args") and "from" in stmt.args and stmt.args["from"]:
-        main_table = stmt.args["from"].args["this"]
-        info["tables"].append(str(main_table))
-    # Columnas seleccionadas y agregaciones
-    if hasattr(stmt, "args") and "expressions" in stmt.args and stmt.args["expressions"]:
-        for expr in stmt.args["expressions"]:
-            if expr.key.upper() in ("SUM", "COUNT"):
-                info["aggregates"].append({
-                    "func": expr.key.upper(),
-                    "col": str(expr.args["this"]),
-                    "alias": getattr(expr, "alias", None)
-                })
-            else:
-                info["columns"].append(getattr(expr, "alias", None) or getattr(expr, "name", None) or str(expr))
-    # Joins
-    if hasattr(stmt, "args") and "joins" in stmt.args and stmt.args["joins"]:
-        for join in stmt.args["joins"]:
-            join_table = join.args["this"]
-            on_expr = join.args["on"]
-            info["joins"].append({
-                "table": str(join_table),
-                "on_left": str(on_expr.args["this"]),
-                "on_right": str(on_expr.args["expression"])
-            })
-    # Group by
-    if hasattr(stmt, "args") and "group" in stmt.args and stmt.args["group"]:
-        for gexpr in stmt.args["group"].expressions:
-            info["group_by"].append(str(gexpr))
-    return info
+    """Etapa 2: Algebrizer - Extrae tipo de sentencia usando sqlglot."""
+    return stmt.key.upper()  # Por ejemplo: 'SELECT', 'INSERT', etc.
 
 def optimizer(stmt_type, query):
     """Etapa 3: Optimizer/Planner - Usa caché para SELECT, plan simple para otros."""
@@ -145,84 +103,12 @@ def optimizer(stmt_type, query):
         return {"plan": "cache", "cached_result": query_cache[query]}
     return {"plan": "execute", "query": query}
 
-def executor(plan, stmt_type, query, data, stmt_info):
+def executor(plan, stmt_type, query, data):
     """Etapa 4: Executor - Ejecuta el plan (toda tu lógica real aquí)."""
     # SELECT con caché
     if plan.get("plan") == "cache":
         return {"source": "cache", **plan["cached_result"]}
 
-    # --- Lógica para SELECT usando stmt_info ---
-    if stmt_type == "SELECT":
-        # JOIN simple
-        if stmt_info["joins"]:
-            main_table = stmt_info["tables"][0]
-            join = stmt_info["joins"][0]
-            join_table = join["table"]
-            left_col = join["on_left"].split(".")[-1]
-            right_col = join["on_right"].split(".")[-1]
-            db1, t1 = parse_db_table(main_table)
-            db2, t2 = parse_db_table(join_table)
-            rows1 = load_table(db1, t1)["rows"]
-            rows2 = load_table(db2, t2)["rows"]
-            joined = join_tables(rows1, rows2, left_col, right_col)
-
-            # Si hay GROUP BY, agrupa sobre el resultado del JOIN
-            if stmt_info["group_by"]:
-                group_cols = [col for col in stmt_info["group_by"]]
-                result = []
-                groups = {}
-                for row in joined:
-                    key = tuple(row[col.split(".")[-1]] for col in group_cols)
-                    groups.setdefault(key, []).append(row)
-                for key, group_rows in groups.items():
-                    result_row = {col.split(".")[-1]: val for col, val in zip(group_cols, key)}
-                    for agg in stmt_info["aggregates"]:
-                        agg_func = agg["func"]
-                        agg_col = agg["col"].split(".")[-1]
-                        alias = agg["alias"] or f"{agg_func.lower()}_{agg_col}"
-                        if agg_func == "SUM":
-                            agg_value = sum(float(r.get(agg_col, 0)) for r in group_rows)
-                        elif agg_func == "COUNT":
-                            agg_value = len(group_rows)
-                        else:
-                            agg_value = None
-                        result_row[alias] = agg_value
-                    result.append(result_row)
-                return {"source": "executed", "rows": result}
-
-            # Si no hay GROUP BY, solo selecciona columnas del JOIN
-            result = []
-            for row in joined:
-                result_row = {}
-                for col in stmt_info["columns"]:
-                    if "." in col:
-                        _, real_col = col.split(".", 1)
-                    else:
-                        real_col = col
-                    result_row[col] = row.get(real_col)
-                for agg in stmt_info["aggregates"]:
-                    alias = agg["alias"] or f"{agg['func'].lower()}_{agg['col']}"
-                    if agg["func"] == "SUM":
-                        result_row[alias] = float(row.get(agg["col"], 0))
-                    elif agg["func"] == "COUNT":
-                        result_row[alias] = 1
-                result.append(result_row)
-            return {"source": "executed", "rows": result}
-
-        # SELECT simple (sin JOIN ni GROUP BY)
-        if stmt_info["tables"]:
-            db, table = parse_db_table(stmt_info["tables"][0])
-            table_data = load_table(db, table)
-            if not table_data:
-                raise ValueError(f'Tabla {table} no existe en base {db}')
-            if stmt_info["columns"] == ["*"]:
-                # Devuelve todas las columnas
-                result = [row for row in table_data["rows"]]
-            else:
-                result = [{col: row.get(col) for col in stmt_info["columns"]} for row in table_data["rows"]]
-            query_cache[query] = {"columns": table_data["columns"], "rows": result}
-            return {"source": "executed", "columns": table_data["columns"], "rows": result}
-    
     # CREATE DATABASE
     if query.lower().startswith("create database"):
         match = re.match(r"create database (\w+)", query, re.IGNORECASE)
@@ -410,6 +296,83 @@ def executor(plan, stmt_type, query, data, stmt_info):
         query_cache.clear()
         return {'message': f'{deleted} filas eliminadas de {table} en {db}'}
 
+    # SELECT (sin caché)
+    # SELECT avanzado: JOIN y GROUP BY
+    if stmt_type == "SELECT":
+        stmt = sqlglot.parse_one(query)
+        # JOIN
+                if stmt.args.get("joins"):
+            main_table = stmt.args["from"].args["this"]
+            join = stmt.args["joins"][0]
+            join_table = join.args["this"]
+            on_expr = join.args["on"]
+            left_col = str(on_expr.args["this"]).split(".")[-1]
+            right_col = str(on_expr.args["expression"]).split(".")[-1]
+            db1, t1 = parse_db_table(str(main_table))
+            db2, t2 = parse_db_table(str(join_table))
+            rows1 = load_table(db1, t1)["rows"]
+            rows2 = load_table(db2, t2)["rows"]
+            joined = join_tables(rows1, rows2, left_col, right_col)
+
+            result = []
+            for row in joined:
+                result_row = {}
+                for expr in stmt.args["expressions"]:
+                    # Alias
+                    alias = getattr(expr, "alias", None)
+                    if alias:
+                        col_name = alias
+                    elif hasattr(expr, "name"):
+                        col_name = expr.name
+                    else:
+                        col_name = str(expr)
+
+                    # Función de agregación
+                    if expr.key.upper() in ("SUM", "COUNT"):
+                        func = expr.key.upper()
+                        col = str(expr.args["this"]).split(".")[-1]
+                        if func == "SUM":
+                            result_row[col_name] = float(row.get(col, 0))
+                        elif func == "COUNT":
+                            result_row[col_name] = 1  # Se puede sumar después si es GROUP BY
+                    else:
+                        # Columna normal
+                        result_row[col_name] = row.get(col_name)
+                result.append(result_row)
+            return {"source": "executed", "rows": result}
+        # GROUP BY + SUM/COUNT
+        if stmt.args.get("group"):
+            group_col = str(stmt.args["group"].expressions[0]).split(".")[-1]
+            agg_expr = stmt.args["expressions"][1]  # Ej: SUM(col)
+            agg_func = agg_expr.key.upper()
+            agg_col = str(agg_expr.args["this"]).split(".")[-1]
+            main_table = stmt.args["from"].args["this"]
+            db, t = parse_db_table(str(main_table))
+            rows = load_table(db, t)["rows"]
+            grouped = group_by_agg(rows, group_col, agg_col, agg_func)
+            return {"source": "executed", "rows": grouped}
+    if query.lower().startswith("select"):
+        match = re.match(r"select (.+) from (\w+\.\w+|\w+)", query, re.IGNORECASE)
+        if not match:
+            raise ValueError('Sintaxis inválida para SELECT')
+        columns, full_table = match.groups()
+        db, table = parse_db_table(full_table)
+        if not db or not is_valid_name(db) or not is_valid_name(table):
+            raise ValueError('Nombre de base de datos o tabla inválido')
+        table_data = load_table(db, table)
+        if not table_data:
+            raise ValueError(f'Tabla {table} no existe en base {db}')
+        if columns.strip() == "*":
+            result = table_data["rows"]
+        else:
+            cols = [c.strip() for c in columns.split(',')]
+            for col in cols:
+                if col not in table_data["columns"]:
+                    raise ValueError(f'Columna {col} no existe en la tabla {table}')
+            result = [{col: row.get(col) for col in cols} for row in table_data["rows"]]
+        # Guarda en caché el resultado
+        query_cache[query] = {"columns": table_data["columns"], "rows": result}
+        return {"source": "executed", "columns": table_data["columns"], "rows": result}
 
     raise ValueError('Solo se soportan CREATE TABLE, INSERT, SELECT, UPDATE y DELETE básicos con db.tabla')
 
@@ -429,14 +392,13 @@ def execute_sql():
         # 1. Parser
         stmt = parser(query)
         # 2. Algebrizer
-        stmt_info = algebrizer(stmt)
-        stmt_type = stmt_info["type"]
+        stmt_type = algebrizer(stmt)
         if stmt_type not in ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'COMMAND']:
             return jsonify({'error': f'Tipo de consulta no soportado: {stmt_type}'}), 400
         # 3. Optimizer/Planner (incluye caché)
         plan = optimizer(stmt_type, query)
         # 4. Executor
-        result = executor(plan, stmt_type, query, data, stmt_info)
+        result = executor(plan, stmt_type, query, data)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 400
