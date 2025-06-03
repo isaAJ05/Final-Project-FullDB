@@ -209,19 +209,21 @@ def executor(plan, stmt_type, query, data, stmt_info):
                 result.append(result_row)
             return {"source": "executed", "rows": result}
 
-        # SELECT simple (sin JOIN ni GROUP BY)
+            # SELECT simple (sin JOIN ni GROUP BY)
         if stmt_info["tables"]:
-            db, table = parse_db_table(stmt_info["tables"][0])
-            table_data = load_table(db, table)
-            if not table_data:
-                raise ValueError(f'Tabla {table} no existe en base {db}')
-            if stmt_info["columns"] == ["*"]:
-                # Devuelve todas las columnas
-                result = [row for row in table_data["rows"]]
+                db, table = parse_db_table(stmt_info["tables"][0])
+                table_data = load_table(db, table)
+                if not table_data:
+                        raise ValueError(f'Tabla {table} no existe en base {db}')
+                if stmt_info["columns"] == ["*"]:
+                        # Devuelve todas las columnas
+                    result = [row for row in table_data["rows"]]
+                else:
+                    result = [{col: row.get(col) for col in stmt_info["columns"]} for row in table_data["rows"]]
             else:
-                result = [{col: row.get(col) for col in stmt_info["columns"]} for row in table_data["rows"]]
-            query_cache[query] = {"columns": table_data["columns"], "rows": result}
-            return {"source": "executed", "columns": table_data["columns"], "rows": result}
+                result = table_data["rows"]
+                query_cache[query] = {"columns": table_data["columns"], "rows": result}
+                return {"source": "executed", "columns": table_data["columns"], "rows": result}
     
     # CREATE DATABASE
     if query.lower().startswith("create database"):

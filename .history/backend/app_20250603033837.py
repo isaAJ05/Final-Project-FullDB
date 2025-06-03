@@ -46,8 +46,6 @@ def backup_table(db, table, data):
         json.dump(data, f)
 
 def parse_db_table(full_name):
-    # Elimina alias si existe (por ejemplo: "tienda.clientes AS c" -> "tienda.clientes")
-    full_name = full_name.split(" AS ")[0].split(" as ")[0].strip()
     parts = full_name.split('.')
     if len(parts) == 2:
         return parts[0], parts[1]
@@ -166,35 +164,11 @@ def executor(plan, stmt_type, query, data, stmt_info):
             rows2 = load_table(db2, t2)["rows"]
             joined = join_tables(rows1, rows2, left_col, right_col)
 
-            # Si hay GROUP BY, agrupa sobre el resultado del JOIN
-            if stmt_info["group_by"]:
-                group_cols = [col for col in stmt_info["group_by"]]
-                result = []
-                groups = {}
-                for row in joined:
-                    key = tuple(row[col.split(".")[-1]] for col in group_cols)
-                    groups.setdefault(key, []).append(row)
-                for key, group_rows in groups.items():
-                    result_row = {col.split(".")[-1]: val for col, val in zip(group_cols, key)}
-                    for agg in stmt_info["aggregates"]:
-                        agg_func = agg["func"]
-                        agg_col = agg["col"].split(".")[-1]
-                        alias = agg["alias"] or f"{agg_func.lower()}_{agg_col}"
-                        if agg_func == "SUM":
-                            agg_value = sum(float(r.get(agg_col, 0)) for r in group_rows)
-                        elif agg_func == "COUNT":
-                            agg_value = len(group_rows)
-                        else:
-                            agg_value = None
-                        result_row[alias] = agg_value
-                    result.append(result_row)
-                return {"source": "executed", "rows": result}
-
-            # Si no hay GROUP BY, solo selecciona columnas del JOIN
             result = []
             for row in joined:
                 result_row = {}
                 for col in stmt_info["columns"]:
+                    # Soporta tanto "c.nombre" como "nombre"
                     if "." in col:
                         _, real_col = col.split(".", 1)
                     else:
@@ -207,6 +181,36 @@ def executor(plan, stmt_type, query, data, stmt_info):
                     elif agg["func"] == "COUNT":
                         result_row[alias] = 1
                 result.append(result_row)
+
+                # GROUP BY (sin JOIN)
+        if stmt_info["group_by"]:
+            group_cols = [col.split(".")[-1] for col in stmt_info["group_by"]]
+            main_table = stmt_info["tables"][0]
+            db, t = parse_db_table(main_table)
+            rows = load_table(db, t)["rows"]
+
+            result = []
+            # Agrupar por los valores de group_cols
+            groups = {}
+            for row in rows:
+                key = tuple(row[col] for col in group_cols)
+                groups.setdefault(key, []).append(row)
+
+            for key, group_rows in groups.items():
+                result_row = {col: val for col, val in zip(group_cols, key)}
+                # Solo agrega los agregados seleccionados
+                for agg in stmt_info["aggregates"]:
+                    agg_func = agg["func"]
+                    agg_col = agg["col"].split(".")[-1]
+                    alias = agg["alias"] or f"{agg_func.lower()}_{agg_col}"
+                    if agg_func == "SUM":
+                        agg_value = sum(float(r.get(agg_col, 0)) for r in group_rows)
+                    elif agg_func == "COUNT":
+                        agg_value = len(group_rows)
+                    else:
+                        agg_value = None
+                    result_row[alias] = agg_value
+                result.append(result_row)
             return {"source": "executed", "rows": result}
 
         # SELECT simple (sin JOIN ni GROUP BY)
@@ -215,11 +219,10 @@ def executor(plan, stmt_type, query, data, stmt_info):
             table_data = load_table(db, table)
             if not table_data:
                 raise ValueError(f'Tabla {table} no existe en base {db}')
-            if stmt_info["columns"] == ["*"]:
-                # Devuelve todas las columnas
-                result = [row for row in table_data["rows"]]
-            else:
+            if stmt_info["columns"]:
                 result = [{col: row.get(col) for col in stmt_info["columns"]} for row in table_data["rows"]]
+            else:
+                result = table_data["rows"]
             query_cache[query] = {"columns": table_data["columns"], "rows": result}
             return {"source": "executed", "columns": table_data["columns"], "rows": result}
     

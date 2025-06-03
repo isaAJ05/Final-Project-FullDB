@@ -168,27 +168,27 @@ def executor(plan, stmt_type, query, data, stmt_info):
 
             # Si hay GROUP BY, agrupa sobre el resultado del JOIN
             if stmt_info["group_by"]:
-                group_cols = [col for col in stmt_info["group_by"]]
-                result = []
-                groups = {}
-                for row in joined:
-                    key = tuple(row[col.split(".")[-1]] for col in group_cols)
-                    groups.setdefault(key, []).append(row)
-                for key, group_rows in groups.items():
-                    result_row = {col.split(".")[-1]: val for col, val in zip(group_cols, key)}
-                    for agg in stmt_info["aggregates"]:
-                        agg_func = agg["func"]
-                        agg_col = agg["col"].split(".")[-1]
-                        alias = agg["alias"] or f"{agg_func.lower()}_{agg_col}"
-                        if agg_func == "SUM":
-                            agg_value = sum(float(r.get(agg_col, 0)) for r in group_rows)
-                        elif agg_func == "COUNT":
-                            agg_value = len(group_rows)
-                        else:
-                            agg_value = None
-                        result_row[alias] = agg_value
-                    result.append(result_row)
-                return {"source": "executed", "rows": result}
+            group_cols = [col for col in stmt_info["group_by"]]
+            result = []
+            groups = {}
+            for row in joined:
+                key = tuple(row[col.split(".")[-1]] for col in group_cols)
+                groups.setdefault(key, []).append(row)
+            for key, group_rows in groups.items():
+                result_row = {col.split(".")[-1]: val for col, val in zip(group_cols, key)}
+                for agg in stmt_info["aggregates"]:
+                    agg_func = agg["func"]
+                    agg_col = agg["col"].split(".")[-1]
+                    alias = agg["alias"] or f"{agg_func.lower()}_{agg_col}"
+                    if agg_func == "SUM":
+                        agg_value = sum(float(r.get(agg_col, 0)) for r in group_rows)
+                    elif agg_func == "COUNT":
+                        agg_value = len(group_rows)
+                    else:
+                        agg_value = None
+                    result_row[alias] = agg_value
+                result.append(result_row)
+            return {"source": "executed", "rows": result}
 
             # Si no hay GROUP BY, solo selecciona columnas del JOIN
             result = []
@@ -215,11 +215,10 @@ def executor(plan, stmt_type, query, data, stmt_info):
             table_data = load_table(db, table)
             if not table_data:
                 raise ValueError(f'Tabla {table} no existe en base {db}')
-            if stmt_info["columns"] == ["*"]:
-                # Devuelve todas las columnas
-                result = [row for row in table_data["rows"]]
-            else:
+            if stmt_info["columns"]:
                 result = [{col: row.get(col) for col in stmt_info["columns"]} for row in table_data["rows"]]
+            else:
+                result = table_data["rows"]
             query_cache[query] = {"columns": table_data["columns"], "rows": result}
             return {"source": "executed", "columns": table_data["columns"], "rows": result}
     

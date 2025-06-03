@@ -209,7 +209,7 @@ def executor(plan, stmt_type, query, data, stmt_info):
                 result.append(result_row)
             return {"source": "executed", "rows": result}
 
-        # SELECT simple (sin JOIN ni GROUP BY)
+                # SELECT simple (sin JOIN ni GROUP BY)
         if stmt_info["tables"]:
             db, table = parse_db_table(stmt_info["tables"][0])
             table_data = load_table(db, table)

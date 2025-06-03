@@ -175,7 +175,7 @@ def executor(plan, stmt_type, query, data, stmt_info):
                     key = tuple(row[col.split(".")[-1]] for col in group_cols)
                     groups.setdefault(key, []).append(row)
                 for key, group_rows in groups.items():
-                    result_row = {col.split(".")[-1]: val for col, val in zip(group_cols, key)}
+                    result_row = {col: val for col, val in zip(group_cols, key)}
                     for agg in stmt_info["aggregates"]:
                         agg_func = agg["func"]
                         agg_col = agg["col"].split(".")[-1]
@@ -215,11 +215,10 @@ def executor(plan, stmt_type, query, data, stmt_info):
             table_data = load_table(db, table)
             if not table_data:
                 raise ValueError(f'Tabla {table} no existe en base {db}')
-            if stmt_info["columns"] == ["*"]:
-                # Devuelve todas las columnas
-                result = [row for row in table_data["rows"]]
-            else:
+            if stmt_info["columns"]:
                 result = [{col: row.get(col) for col in stmt_info["columns"]} for row in table_data["rows"]]
+            else:
+                result = table_data["rows"]
             query_cache[query] = {"columns": table_data["columns"], "rows": result}
             return {"source": "executed", "columns": table_data["columns"], "rows": result}
     
