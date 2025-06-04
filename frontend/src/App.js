@@ -454,11 +454,11 @@ function App() {
                   </tbody>
                 </table>
               ) : result && result.message ? (
-                "Tablas y Resultados."
+                "Tablas"
               ) : result ? (
                 <pre>{JSON.stringify(result, null, 2)}</pre>
               ) : (
-                "Tablas y Resultados."
+                "Tablas"
               )}
             </div>
 
