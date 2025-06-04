@@ -337,7 +337,7 @@ def executor(plan, stmt_type, query, data, stmt_info):
 
     # INSERT
     if query.lower().startswith("insert into"):
-        match = re.match(r"insert into (\w+\.\w+|\w+)\s*\(([\s\S]+?)\)\s*values\s*\(([\s\S]+?)\)", query, re.IGNORECASE)
+        match = re.match(r"insert into (\w+\.\w+|\w+) \((.+)\) values \((.+)\)", query, re.IGNORECASE)
         if not match:
             raise ValueError('Sintaxis inválida para INSERT')
         full_table, columns, values = match.groups()

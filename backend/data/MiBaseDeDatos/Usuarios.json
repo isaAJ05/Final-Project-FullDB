@@ -1,0 +1,1 @@
+{"columns": ["id", "nombre", "email"], "rows": [{"id": "1", "nombre": "Isabella", "email": "isabella@email.com"}, {"id": "2", "nombre": "Carlos", "email": "carlos@email.com"}, {"id": "5", "nombre": "\nBritos", "email": "sbrita@uninorte.edu.co"}]}

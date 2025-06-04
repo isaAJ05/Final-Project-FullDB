@@ -281,23 +281,23 @@ def executor(plan, stmt_type, query, data, stmt_info):
     # Cambia esta línea:
     # match = re.match(r"create table (\w+\.\w+|\w+) \((.+)\)", query, re.IGNORECASE)
     # Por esta (nota el re.DOTALL):
-        match = re.match(r"create table (\w+\.\w+|\w+)\s*\(([\s\S]+)\)", query, re.IGNORECASE)
-        if not match:
-            raise ValueError('Sintaxis inválida para CREATE TABLE')
-        full_table, columns = match.groups()
-        db, table = parse_db_table(full_table)
-        if not db or not is_valid_name(db) or not is_valid_name(table):
-            raise ValueError('Nombre de base de datos o tabla inválido')
-        # Quita espacios y saltos de línea, y elimina comas extra
-        columns = [col.strip().strip(',') for col in columns.replace('\n', '').split(',') if col.strip()]
-        if len(set(columns)) != len(columns):
-            raise ValueError('No puede haber columnas repetidas')
-        table_path = os.path.join(DATA_DIR, db, f"{table}.json")
-        if os.path.exists(table_path):
-            raise ValueError(f'La tabla {table} ya existe en base {db}')
-        save_table(db, table, {"columns": columns, "rows": []})
-        query_cache.clear()
-        return {'message': f'Tabla {table} creada en base {db} con columnas {columns}'}   
+    match = re.match(r"create table (\w+\.\w+|\w+)\s*\(([\s\S]+)\)", query, re.IGNORECASE)
+    if not match:
+        raise ValueError('Sintaxis inválida para CREATE TABLE')
+    full_table, columns = match.groups()
+    db, table = parse_db_table(full_table)
+    if not db or not is_valid_name(db) or not is_valid_name(table):
+        raise ValueError('Nombre de base de datos o tabla inválido')
+    # Quita espacios y saltos de línea, y elimina comas extra
+    columns = [col.strip().strip(',') for col in columns.replace('\n', '').split(',') if col.strip()]
+    if len(set(columns)) != len(columns):
+        raise ValueError('No puede haber columnas repetidas')
+    table_path = os.path.join(DATA_DIR, db, f"{table}.json")
+    if os.path.exists(table_path):
+        raise ValueError(f'La tabla {table} ya existe en base {db}')
+    save_table(db, table, {"columns": columns, "rows": []})
+    query_cache.clear()
+    return {'message': f'Tabla {table} creada en base {db} con columnas {columns}'}   
 
     # DROP TABLE
     if query.lower().startswith("drop table"):
@@ -337,7 +337,7 @@ def executor(plan, stmt_type, query, data, stmt_info):
 
     # INSERT
     if query.lower().startswith("insert into"):
-        match = re.match(r"insert into (\w+\.\w+|\w+)\s*\(([\s\S]+?)\)\s*values\s*\(([\s\S]+?)\)", query, re.IGNORECASE)
+        match = re.match(r"insert into (\w+\.\w+|\w+) \((.+)\) values \((.+)\)", query, re.IGNORECASE)
         if not match:
             raise ValueError('Sintaxis inválida para INSERT')
         full_table, columns, values = match.groups()
