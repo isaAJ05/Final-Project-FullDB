@@ -102,6 +102,13 @@ function App() {
   const [newDb, setNewDb] = useState("");
   const [tableName, setTableName] = useState("");
   const [csvFile, setCsvFile] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loginUser, setLoginUser] = useState("");
+  const [loginPass, setLoginPass] = useState("");
+  const [loginError, setLoginError] = useState("");
+  // Nuevo estado para animación de login
+  const [loginFade, setLoginFade] = useState(false);
+  const [mainFadeIn, setMainFadeIn] = useState(false);
 
 
 
@@ -214,265 +221,346 @@ function App() {
     };
   }, [isDragging]);
 
+  // Login visual simple
   return (
-    <div className={`app-container ${isHistoryOpen ? "history-open" : ""}`}>
-      <nav className="navbar">
-        <button
-          className="toggle-history-btn"
-          onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+    <>
+      {/* Fondo oscuro fijo para toda la app y transición */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        minHeight: '100vh',
+        minWidth: '100vw',
+        background: 'radial-gradient(ellipse, #3e4863 10%, #181c27 100%)',
+        zIndex: 0,
+        pointerEvents: 'none',
+      }} />
+      <div className={`login-bg${loginFade ? ' fade-out' : ''}`} style={{ minHeight: '100vh', position: 'fixed', inset: 0, zIndex: 10, display: isLoggedIn ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', background: 'none' }}>
+        <form
+          className="login-form"
+          style={{
+            background: '#181c27',
+            border: '2px solid #9b0018',
+            borderRadius: 10,
+            boxShadow: '0 0 24px #000a',
+            padding: 36,
+            minWidth: 320,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 18,
+            color: '#fff',
+          }}
+          onSubmit={e => {
+            e.preventDefault();
+            const user = loginUser.trim().toLowerCase();
+            const pass = loginPass.trim();
+            if (user === "admin" && pass === "admin") {
+              setLoginFade(true);
+              setLoginError("");
+              setTimeout(() => {
+                setIsLoggedIn(true);
+                setLoginFade(false);
+              }, 700);
+            } else {
+              setLoginError("Usuario o contraseña incorrectos");
+            }
+          }}
         >
-          {isHistoryOpen ? "✖" : "☰"}
-        </button>
-        <h1>Consultas SQL</h1>
-      </nav>
-
-      <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
-        {/* Título principal */}
-        <div style={{ color: "#fff", marginBottom: 30 }}>
-        <h1 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span>🖥️</span>
-          localhost
+          <h2 style={{ color: '#fff', marginBottom: 8, textAlign: 'center', letterSpacing: 1 }}>Iniciar sesión</h2>
+          <label style={{ color: '#ffe082' }}>Usuario</label>
+          <input
+            type="text"
+            value={loginUser}
+            onChange={e => setLoginUser(e.target.value)}
+            placeholder="Usuario"
+            style={{ background: '#23263a', color: '#fff', border: '1.5px solid #9b0018', borderRadius: 5, padding: '10px 12px', fontSize: 16, marginBottom: 8 }}
+            autoFocus
+          />
+          <label style={{ color: '#ffe082' }}>Contraseña</label>
+          <input
+            type="password"
+            value={loginPass}
+            onChange={e => setLoginPass(e.target.value)}
+            placeholder="Contraseña"
+            style={{ background: '#23263a', color: '#fff', border: '1.5px solid #9b0018', borderRadius: 5, padding: '10px 12px', fontSize: 16, marginBottom: 8 }}
+          />
+          {loginError && <div style={{ color: '#ff1744', background: '#4f1f1f', borderRadius: 5, padding: 8, marginBottom: 8, textAlign: 'center' }}>{loginError}</div>}
           <button
+            type="submit"
+            style={{ background: '#9b0018', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 0', fontSize: 17, fontWeight: 600, cursor: 'pointer', marginTop: 8, transition: 'background 0.2s' }}
+            onMouseOver={e => (e.currentTarget.style.background = '#680010')}
+            onMouseOut={e => (e.currentTarget.style.background = '#9b0018')}
+          >
+            Entrar
+          </button>
+        </form>
+      </div>
+      <div className={`app-container${loginFade || !isLoggedIn ? '' : ' main-fade-in'}${isHistoryOpen ? ' history-open' : ''}`}
+        style={{
+          opacity: loginFade || !isLoggedIn ? 0 : 1,
+          pointerEvents: loginFade || !isLoggedIn ? 'none' : 'auto',
+          transition: 'opacity 0.7s cubic-bezier(0.4,0,0.2,1)',
+          position: 'relative',
+          zIndex: 1
+        }}
+      >
+        <nav className="navbar">
+          <button
+            className="toggle-history-btn"
+            onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+          >
+            {isHistoryOpen ? "✖" : "☰"}
+          </button>
+          <h1>Consultas SQL</h1>
+        </nav>
+
+        <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
+          {/* Título principal */}
+          <div style={{ color: "#fff", marginBottom: 30 }}>
+          <h1 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span>🖥️</span>
+            localhost
+            <button
+              style={{
+                background: "none",
+                border: "none",
+                color: "#fff",
+                cursor: "pointer",
+                padding: 4,
+                borderRadius: "50%",
+                transition: "background 0.2s",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+              title="Refrescar bases de datos"
+              onClick={() => {
+                fetch('http://127.0.0.1:5000/databases')
+                  .then(res => res.json())
+                  .then(data => setDatabases(data.databases || []))
+                  .catch(() => setDatabases([]));
+                fetch(`http://127.0.0.1:5000/tables?db=${expandedDb}`)
+                  .then(res => res.json())
+                  .then(data => {
+                    setTablesByDb(prev => ({ ...prev, [expandedDb]: data.tables || [] }));
+                    setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
+                  })
+                  .catch(() => {
+                    setTablesByDb(prev => ({ ...prev, [expandedDb]: [] }));
+                    setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
+                  });
+                
+              }}
+              onMouseOver={e => e.currentTarget.style.background = "#23263a"}
+              onMouseOut={e => e.currentTarget.style.background = "none"}
+            >
+              <img
+                src="https://img.icons8.com/ios-filled/24/ffffff/refresh--v1.png"
+                alt="Refrescar"
+                style={{ width: 18, height: 18, display: "block" }}
+              />
+            </button>
+          </h1>
+        </div>
+        
+
+          {/* Carpeta Databases */}
+          <button
+            className="history-btn"
             style={{
-              background: "none",
-              border: "none",
-              color: "#fff",
-              cursor: "pointer",
-              padding: 4,
-              borderRadius: "50%",
-              transition: "background 0.2s",
+              fontWeight: "bold",
+              background: isDbListOpen ? "#22263a" : undefined,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center"
+              gap: 8,
+              fontSize: "1.1em",
+              marginBottom: 8
             }}
-            title="Refrescar bases de datos"
-            onClick={() => {
-              fetch('http://127.0.0.1:5000/databases')
-                .then(res => res.json())
-                .then(data => setDatabases(data.databases || []))
-                .catch(() => setDatabases([]));
-              fetch(`http://127.0.0.1:5000/tables?db=${expandedDb}`)
-                .then(res => res.json())
-                .then(data => {
-                  setTablesByDb(prev => ({ ...prev, [expandedDb]: data.tables || [] }));
-                  setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
-                })
-                .catch(() => {
-                  setTablesByDb(prev => ({ ...prev, [expandedDb]: [] }));
-                  setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
-                });
-              
-            }}
-            onMouseOver={e => e.currentTarget.style.background = "#23263a"}
-            onMouseOut={e => e.currentTarget.style.background = "none"}
+            onClick={() => setIsDbListOpen(!isDbListOpen)}
+            title="Mostrar bases de datos"
           >
-            <img
-              src="https://img.icons8.com/ios-filled/24/ffffff/refresh--v1.png"
-              alt="Refrescar"
-              style={{ width: 18, height: 18, display: "block" }}
-            />
+            <span style={{ fontSize: 18 }}>{isDbListOpen ? "📂" : "📁"}</span>
+            Databases
           </button>
-        </h1>
-      </div>
-      
-
-        {/* Carpeta Databases */}
-        <button
-          className="history-btn"
-          style={{
-            fontWeight: "bold",
-            background: isDbListOpen ? "#22263a" : undefined,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: "1.1em",
-            marginBottom: 8
-          }}
-          onClick={() => setIsDbListOpen(!isDbListOpen)}
-          title="Mostrar bases de datos"
-        >
-          <span style={{ fontSize: 18 }}>{isDbListOpen ? "📂" : "📁"}</span>
-          Databases
-        </button>
 
 
-        {/* Lista de bases de datos y tablas */}
-        {isDbListOpen && (
-        <div style={{ marginLeft: 16, borderLeft: "2px solid #333", paddingLeft: 8 }}>
-          {databases.length === 0 ? (
-            <p style={{ fontSize: "0.95em" }}>No hay bases de datos.</p>
-          ) : (
-            databases.map((db) => (
-              <div key={db}>
-                <button
-                  className="history-btn"
-                  style={{
-                    fontWeight: expandedDb === db ? "bold" : "normal",
-                    background: expandedDb === db ? "#23263a" : undefined,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6
-                  }}
-                  onClick={() => setExpandedDb(expandedDb === db ? null : db)}
-                  title={`Ver tablas de ${db}`}
-                >
-                  <span style={{ fontSize: 16 }}>
-                    {expandedDb === db ? "📂" : "📁"}
-                  </span>
-                  {db}
-                </button>
-                {expandedDb === db && (
-                <div style={{ marginLeft: 16, borderLeft: "2px solid #333", paddingLeft: 8 }}>
-                  {loadingTables[db] ? (
-                    <p style={{ fontSize: "0.9em" }}>Cargando tablas...</p>
-                  ) : tablesByDb[db] && tablesByDb[db].length > 0 ? (
-                    tablesByDb[db].map((table) => (
-                      <button
-                        key={table}
-                        className="history-btn"
-                        style={{
-                          fontSize: "0.95em",
-                          background: "#23263a",
-                          margin: "3px 0",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6
-                        }}
-                        title={`Ver tablas de ${db}`}
-                      >
-                        <span style={{ fontSize: 15 }}>🗒️</span>
-                        {table}
-                      </button>
-                    ))
-                  ) : (
-                    <p style={{ fontSize: "0.9em" }}>No hay tablas.</p>
-                  )}
-                </div>
-              )}
-
-
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      </aside>
-
-      <div className="main-content">
-        <div className="left-panel" style={{ width: `${leftWidth}%` }}>
-          <div className="query-input">
-            <SqlEditor query={query} setQuery={setQuery} />
-            <div className="buttons-row">
-              <button onClick={handleExtract} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v18l15-9-15-9z" /></svg>
-
-              </button>
-              <label  
-                className="upload-btn"
-                style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
-                onClick={() => setShowUpload(true)}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" /></svg>
-
-              </label>
-              
-              
-              {showUpload && (
-                <div className="modal-bg">
-                  <div className="modal">
-                    <h3>Subir CSV</h3>
-                    <div>
-                      <label>Base de datos existente:</label>
-                      <select value={selectedDb} onChange={e => setSelectedDb(e.target.value)}>
-                        <option value="">-- Selecciona --</option>
-                        {databases.map(db => <option key={db} value={db}>{db}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label>O crea nueva base:</label>
-                      <input name="new-db" value={newDb} onChange={e => setNewDb(e.target.value)} placeholder="Nueva base" />
-                    </div>
-                    <div>
-                      <label>Nombre de la tabla:</label>
-                      <input name="table-name" value={tableName} onChange={e => setTableName(e.target.value)} placeholder="Nombre tabla" />
-                    </div>
-                    <div>
-                      <label>Archivo CSV:</label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Lista de bases de datos y tablas */}
+          {isDbListOpen && (
+          <div style={{ marginLeft: 16, borderLeft: "2px solid #333", paddingLeft: 8 }}>
+            {databases.length === 0 ? (
+              <p style={{ fontSize: "0.95em" }}>No hay bases de datos.</p>
+            ) : (
+              databases.map((db) => (
+                <div key={db}>
+                  <button
+                    className="history-btn"
+                    style={{
+                      fontWeight: expandedDb === db ? "bold" : "normal",
+                      background: expandedDb === db ? "#23263a" : undefined,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6
+                    }}
+                    onClick={() => setExpandedDb(expandedDb === db ? null : db)}
+                    title={`Ver tablas de ${db}`}
+                  >
+                    <span style={{ fontSize: 16 }}>
+                      {expandedDb === db ? "📂" : "📁"}
+                    </span>
+                    {db}
+                  </button>
+                  {expandedDb === db && (
+                  <div style={{ marginLeft: 16, borderLeft: "2px solid #333", paddingLeft: 8 }}>
+                    {loadingTables[db] ? (
+                      <p style={{ fontSize: "0.9em" }}>Cargando tablas...</p>
+                    ) : tablesByDb[db] && tablesByDb[db].length > 0 ? (
+                      tablesByDb[db].map((table) => (
                         <button
-                          type="button"
-                          className="upload-btn"
-                          style={{ minWidth: 120 }}
-                          onClick={() => document.getElementById('modal-upload-csv').click()}
+                          key={table}
+                          className="history-btn"
+                          style={{
+                            fontSize: "0.95em",
+                            background: "#23263a",
+                            margin: "3px 0",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6
+                          }}
+                          title={`Ver tablas de ${db}`}
                         >
-                          Seleccionar archivo
+                          <span style={{ fontSize: 15 }}>🗒️</span>
+                          {table}
                         </button>
-                        <span style={{ color: '#bfc7d5', fontSize: '0.98em', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}>
-                          {csvFile ? csvFile.name : 'Ningún archivo seleccionado'}
-                        </span>
-                        <input
-                          type="file"
-                          id="modal-upload-csv"
-                          accept=".csv"
-                          style={{ display: 'none' }}
-                          onChange={e => setCsvFile(e.target.files[0])}
-                        />
-                      </div>
-                    </div>
-                    <button onClick={handleUploadCsv}>Subir</button>
-                    <button onClick={() => setShowUpload(false)}>Cancelar</button>
+                      ))
+                    ) : (
+                      <p style={{ fontSize: "0.9em" }}>No hay tablas.</p>
+                    )}
                   </div>
+                )}
+
+
                 </div>
-              )}
+              ))
+            )}
+          </div>
+        )}
+
+        </aside>
+
+        <div className="main-content">
+          <div className="left-panel" style={{ width: `${leftWidth}%` }}>
+            <div className="query-input">
+              <SqlEditor query={query} setQuery={setQuery} />
+              <div className="buttons-row">
+                <button onClick={handleExtract} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v18l15-9-15-9z" /></svg>
+
+                </button>
+                <label  
+                  className="upload-btn"
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
+                  onClick={() => setShowUpload(true)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" /></svg>
+
+                </label>
+                
+                
+                {showUpload && (
+                  <div className="modal-bg">
+                    <div className="modal">
+                      <h3>Subir CSV</h3>
+                      <div>
+                        <label>Base de datos existente:</label>
+                        <select value={selectedDb} onChange={e => setSelectedDb(e.target.value)}>
+                          <option value="">-- Selecciona --</option>
+                          {databases.map(db => <option key={db} value={db}>{db}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label>O crea nueva base:</label>
+                        <input name="new-db" value={newDb} onChange={e => setNewDb(e.target.value)} placeholder="Nueva base" />
+                      </div>
+                      <div>
+                        <label>Nombre de la tabla:</label>
+                        <input name="table-name" value={tableName} onChange={e => setTableName(e.target.value)} placeholder="Nombre tabla" />
+                      </div>
+                      <div>
+                        <label>Archivo CSV:</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <button
+                            type="button"
+                            className="upload-btn"
+                            style={{ minWidth: 120 }}
+                            onClick={() => document.getElementById('modal-upload-csv').click()}
+                          >
+                            Seleccionar archivo
+                          </button>
+                          <span style={{ color: '#bfc7d5', fontSize: '0.98em', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}>
+                            {csvFile ? csvFile.name : 'Ningún archivo seleccionado'}
+                          </span>
+                          <input
+                            type="file"
+                            id="modal-upload-csv"
+                            accept=".csv"
+                            style={{ display: 'none' }}
+                            onChange={e => setCsvFile(e.target.files[0])}
+                          />
+                        </div>
+                      </div>
+                      <button onClick={handleUploadCsv}>Subir</button>
+                      <button onClick={() => setShowUpload(false)}>Cancelar</button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="resizer" onMouseDown={startDragging} />
+          <div className="resizer" onMouseDown={startDragging} />
 
-        <div className="right-panel" style={{ width: `${100 - leftWidth}%` }}>
-          <div className="top-section">
-            <div className="results-panel">
-              {result && result.columns && result.rows ? (
-                <table>
-                  <thead>
-                    <tr>
-                      {result.columns.map((col) => (
-                        <th key={col}>{col}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.rows.map((row, idx) => (
-                      <tr key={idx}>
+          <div className="right-panel" style={{ width: `${100 - leftWidth}%` }}>
+            <div className="top-section">
+              <div className="results-panel">
+                {result && result.columns && result.rows ? (
+                  <table>
+                    <thead>
+                      <tr>
                         {result.columns.map((col) => (
-                          <td key={col}>{row[col]}</td>
+                          <th key={col}>{col}</th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : result && result.message ? (
-                "Tablas"
-              ) : result ? (
-                <pre>{JSON.stringify(result, null, 2)}</pre>
-              ) : (
-                "Tablas"
-              )}
-            </div>
+                    </thead>
+                    <tbody>
+                      {result.rows.map((row, idx) => (
+                        <tr key={idx}>
+                          {result.columns.map((col) => (
+                            <td key={col}>{row[col]}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : result && result.message ? (
+                  "Tablas"
+                ) : result ? (
+                  <pre>{JSON.stringify(result, null, 2)}</pre>
+                ) : (
+                  "Tablas"
+                )}
+              </div>
 
-            <div className="errors-panel">
-              {error ? (
-                <div className="message-error">{error}</div>
-              ) : (result && result.message ? (
-                <div className="message-success">{result.message}</div>
-              ) : "Output")}
+              <div className="errors-panel">
+                {error ? (
+                  <div className="message-error">{error}</div>
+                ) : (result && result.message ? (
+                  <div className="message-success">{result.message}</div>
+                ) : "Output")}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
