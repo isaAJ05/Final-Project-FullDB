@@ -9,6 +9,7 @@ import { defaultHighlightStyle } from "@codemirror/language";
 import { keymap } from "@codemirror/view";
 import { defaultKeymap } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark";
+import { lineNumbers, highlightActiveLine } from "@codemirror/view";
 
 import { createTheme } from '@uiw/codemirror-themes';
 
@@ -17,16 +18,16 @@ import { tags as t } from '@lezer/highlight';
 const myTheme = createTheme({
   theme: 'light',
   settings: {
-    background: '#ffffff',
+    background: '#181c27',
     backgroundImage: '',
     foreground: '#75baff',
     caret: '#ffffff',
     selection: '#036dd626',
     selectionMatch: '#036dd626',
-    lineHighlight: '#8a91991a',
-    gutterBorder: '1px solid #ffffff10',
-    gutterBackground: '#fff',
-    gutterForeground: '#8a919966',
+    lineHighlight: '#181c27', 
+    gutterBorder: 'transparent', // Elimina la línea blanca en el gutter
+    gutterBackground: '#181c27', // Cambia el fondo de la columna de enumerado
+    gutterForeground: '#9b0018', // Cambia el color de los números de línea
   },
   styles: [
     { tag: t.comment, color: '#787b8099' },
@@ -42,7 +43,7 @@ const myTheme = createTheme({
     { tag: t.typeName, color: '#5c6166' },
     { tag: t.angleBracket, color: '#ffffff' },
     { tag: t.tagName, color: '#5c6166' },
-    { tag: t.attributeName, color: '#5c6166' }, 
+    { tag: t.attributeName, color: '#5c6166' },
   ],
 });
 
@@ -62,6 +63,8 @@ function SqlEditor({ query, setQuery }) {
           keymap.of(defaultKeymap),
           myTheme,
           syntaxHighlighting(defaultHighlightStyle),
+          lineNumbers(), // Mostrar líneas enumeradas
+          highlightActiveLine(), // Resalta la línea activa
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
               setQuery(update.state.doc.toString());
@@ -186,11 +189,15 @@ function App() {
           <div className="query-input">
             <SqlEditor query={query} setQuery={setQuery} />
             <div className="buttons-row">
-              <button onClick={handleExtract}>Extraer consulta</button>
-              <label htmlFor="upload-csv" className="upload-btn">
-                Subir CSV
+              <button onClick={handleExtract} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v18l15-9-15-9z" /></svg>
+
+              </button>
+              <label htmlFor="upload-csv" className="upload-btn" style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" /></svg>
+
               </label>
-              <input type="file" id="upload-csv" accept=".csv" />
+              <input type="file" id="upload-csv" accept=".csv" style={{ display: 'none' }} />
             </div>
           </div>
         </div>

@@ -85,10 +85,12 @@
   display: flex;
   overflow: hidden;
   border-top: 1px solid #333;
+  background: radial-gradient(ellipse, #3e4863 10%, #181c27 100%);
 }
 
 /* Query Section (left) */
 .query-input {
+  background-color: rgba(0, 0, 0, 0);
   flex: 1;
   border-right: 1px solid #333;
   padding: 10px;
@@ -96,7 +98,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background-color: #181c27;
+ 
+  
 }
 
 .query-input .buttons-row {
@@ -119,24 +122,20 @@
   box-sizing: border-box;
 }
 
-.sql-editor-container .cm-scroller {
-  overflow: auto;
+/* Asegura que el gutter siempre tenga espacio para al menos 10 líneas */
+.sql-editor-container .cm-gutters {
+  min-width: 30px !important;
+  width: 32px !important;
+  max-width: 35px !important;
 }
 
-/* Estilo para las líneas de selección */
-.cm-focused .cm-selectionBackground {
-  background-color: rgba(155, 0, 24, 0.4) !important;
+/* Mostrar siempre las primeras 10 líneas en el gutter, sin modificar el ancho */
+.sql-editor-container .cm-gutters::after {
+  content: '';
+  display: block;
+  height: calc(1.5em * 10 - 100%);
+  min-height: 0;
 }
-.cm-activeLine {
-  background-color: white !important;
-  border-left: 3px solid #007acc;
-  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
-}
-.cm-activeLine > span {
-  color: white !important;
-}
-
-
 
 /* Estilo para el cursor */
 .cm-cursor {
@@ -188,7 +187,7 @@
   flex: 2;
   display: flex;
   flex-direction: column;
-  background-color: #181c27;
+  background-color: rgba(0, 0, 0, 0);
   height: 100%;
 }
 
@@ -260,14 +259,15 @@
 }
 
 .left-panel {
+  background-color: rgba(0, 0, 0, 0);
   display: flex;
   flex-direction: column;
-  background-color: #232334;
   height: 100%;
   transition: width 0.2s;
 }
 
 .right-panel {
+  background-color: rgba(0, 0, 0, 0);
   flex: 1;
   display: flex;
   flex-direction: column;
