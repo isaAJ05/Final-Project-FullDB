@@ -228,52 +228,36 @@ function App() {
 
       <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
         {/* Título principal */}
-        <div style={{ color: "#fff", marginBottom: 30 }}>
-        <h1 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span>🖥️</span>
-          localhost
-          <button
-            style={{
-              background: "none",
-              border: "none",
-              color: "#fff",
-              cursor: "pointer",
-              padding: 4,
-              borderRadius: "50%",
-              transition: "background 0.2s",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-            title="Refrescar bases de datos"
-            onClick={() => {
-              fetch('http://127.0.0.1:5000/databases')
-                .then(res => res.json())
-                .then(data => setDatabases(data.databases || []))
-                .catch(() => setDatabases([]));
-              fetch(`http://127.0.0.1:5000/tables?db=${expandedDb}`)
-                .then(res => res.json())
-                .then(data => {
-                  setTablesByDb(prev => ({ ...prev, [expandedDb]: data.tables || [] }));
-                  setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
-                })
-                .catch(() => {
-                  setTablesByDb(prev => ({ ...prev, [expandedDb]: [] }));
-                  setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
-                });
-              
-            }}
-            onMouseOver={e => e.currentTarget.style.background = "#23263a"}
-            onMouseOut={e => e.currentTarget.style.background = "none"}
-          >
-            <img
-              src="https://img.icons8.com/ios-filled/24/ffffff/refresh--v1.png"
-              alt="Refrescar"
-              style={{ width: 18, height: 18, display: "block" }}
-            />
-          </button>
-        </h1>
-      </div>
+          <div style={{ color: "#fff", marginBottom: 30 }}>
+          <h1><span>🖥️ </span>localhost</h1>
+                  
+            <button
+              style={{
+                background: "#23263a",
+                color: "#fff",
+                border: "none",
+                borderRadius: 4,
+                padding: "6px 12px",
+                marginTop: 8,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: "1em"
+              }}
+              title="Refrescar bases de datos"
+              onClick={() => {
+                fetch('http://127.0.0.1:5000/databases')
+                  .then(res => res.json())
+                  .then(data => setDatabases(data.databases || []))
+                  .catch(() => setDatabases([]));
+              }}
+            >
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M5 19A9 9 0 1 1 19 5"/></svg>
+              Refrescar
+            </button>
+</div>
+        </div>
       
 
         {/* Carpeta Databases */}

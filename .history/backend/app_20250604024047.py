@@ -521,7 +521,7 @@ def upload_csv():
 
     table_path = os.path.join(db_path, f"{table}.json")
     if os.path.exists(table_path):
-        table_data = load_table(db, table)  # <-- aquí debe ir db, table
+        table_data = load_table(db, table)
     else:
         # Si la tabla no existe, crea una nueva con columnas del CSV
         reader = csv.DictReader(StringIO(file.read().decode('utf-8')))

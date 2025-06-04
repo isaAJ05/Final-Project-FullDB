@@ -228,52 +228,40 @@ function App() {
 
       <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
         {/* Título principal */}
-        <div style={{ color: "#fff", marginBottom: 30 }}>
-        <h1 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span>🖥️</span>
-          localhost
-          <button
-            style={{
-              background: "none",
-              border: "none",
-              color: "#fff",
-              cursor: "pointer",
-              padding: 4,
-              borderRadius: "50%",
-              transition: "background 0.2s",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-            title="Refrescar bases de datos"
-            onClick={() => {
-              fetch('http://127.0.0.1:5000/databases')
-                .then(res => res.json())
-                .then(data => setDatabases(data.databases || []))
-                .catch(() => setDatabases([]));
-              fetch(`http://127.0.0.1:5000/tables?db=${expandedDb}`)
-                .then(res => res.json())
-                .then(data => {
-                  setTablesByDb(prev => ({ ...prev, [expandedDb]: data.tables || [] }));
-                  setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
-                })
-                .catch(() => {
-                  setTablesByDb(prev => ({ ...prev, [expandedDb]: [] }));
-                  setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
-                });
-              
-            }}
-            onMouseOver={e => e.currentTarget.style.background = "#23263a"}
-            onMouseOut={e => e.currentTarget.style.background = "none"}
-          >
-            <img
-              src="https://img.icons8.com/ios-filled/24/ffffff/refresh--v1.png"
-              alt="Refrescar"
-              style={{ width: 18, height: 18, display: "block" }}
-            />
-          </button>
-        </h1>
-      </div>
+          <div style={{ color: "#fff", marginBottom: 30 }}>
+  <h1 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <span>🖥️</span>
+    localhost
+    <button
+      style={{
+        background: "none",
+        border: "none",
+        color: "#fff",
+        cursor: "pointer",
+        padding: 4,
+        borderRadius: "50%",
+        transition: "background 0.2s",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }}
+      title="Refrescar bases de datos"
+      onClick={() => {
+        fetch('http://127.0.0.1:5000/databases')
+          .then(res => res.json())
+          .then(data => setDatabases(data.databases || []))
+          .catch(() => setDatabases([]));
+      }}
+      onMouseOver={e => e.currentTarget.style.background = "#23263a"}
+      onMouseOut={e => e.currentTarget.style.background = "none"}
+    >
+      {/* Font Awesome Refresh Icon */}
+      <svg width="18" height="18" fill="currentColor" viewBox="0 0 512 512">
+        <path d="M500.33 7.03c-11.7-7.8-27.3-4.6-35.1 7.1l-40.6 60.9C381.6 39.7 324.7 16 262.6 16 119.1 16 4.6 130.5 0 273.9c-.4 13.3 10.2 24.1 23.5 24.5s24.1-10.2 24.5-23.5C52.2 163.2 146.2 72 262.6 72c49.8 0 96.1 17.2 132.7 45.9l-62.2 93.3c-7.8 11.7-4.6 27.3 7.1 35.1s27.3 4.6 35.1-7.1l96-144c7.8-11.7 4.6-27.3-7.1-35.1zM488.5 213.6c-13.3-.4-24.1 10.2-24.5 23.5-4.2 111.7-98.2 202.9-214.6 202.9-49.8 0-96.1-17.2-132.7-45.9l62.2-93.3c7.8-11.7 4.6-27.3-7.1-35.1s-27.3-4.6-35.1 7.1l-96 144c-7.8 11.7-4.6 27.3 7.1 35.1 11.7 7.8 27.3 4.6 35.1-7.1l40.6-60.9c42.6 35.3 99.5 59 161.6 59 143.5 0 258-114.5 262.6-257.9.4-13.3-10.2-24.1-23.5-24.5z"/>
+      </svg>
+    </button>
+  </h1>
+</div>
       
 
         {/* Carpeta Databases */}

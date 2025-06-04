@@ -251,17 +251,6 @@ function App() {
                 .then(res => res.json())
                 .then(data => setDatabases(data.databases || []))
                 .catch(() => setDatabases([]));
-              fetch(`http://127.0.0.1:5000/tables?db=${expandedDb}`)
-                .then(res => res.json())
-                .then(data => {
-                  setTablesByDb(prev => ({ ...prev, [expandedDb]: data.tables || [] }));
-                  setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
-                })
-                .catch(() => {
-                  setTablesByDb(prev => ({ ...prev, [expandedDb]: [] }));
-                  setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
-                });
-              
             }}
             onMouseOver={e => e.currentTarget.style.background = "#23263a"}
             onMouseOut={e => e.currentTarget.style.background = "none"}

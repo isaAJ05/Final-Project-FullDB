@@ -93,16 +93,14 @@ function App() {
   const [isDragging, setIsDragging] = useState(false);
   // Nuevo estado para bases de datos y tablas
   const [databases, setDatabases] = useState([]);
-  const [expandedDb, setExpandedDb] = useState(null);          // Base de datos expandida
-  const [tablesByDb, setTablesByDb] = useState({});             // Tablas por base de datos
-  const [loadingTables, setLoadingTables] = useState({});       // Estado de carga por base
+  const [tablesByDb, setTablesByDb] = useState({});
+  const [expandedDb, setExpandedDb] = useState(null);
   const [isDbListOpen, setIsDbListOpen] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [selectedDb, setSelectedDb] = useState("");
   const [newDb, setNewDb] = useState("");
   const [tableName, setTableName] = useState("");
   const [csvFile, setCsvFile] = useState(null);
-
 
 
   // Obtener bases de datos al montar
@@ -113,30 +111,21 @@ function App() {
       .catch(() => setDatabases([]));
   }, []);
 
-  useEffect(() => {
-  if (!expandedDb || tablesByDb[expandedDb]) return;
-
-  setLoadingTables(prev => ({ ...prev, [expandedDb]: true }));
-
-  fetch(`http://127.0.0.1:5000/tables?db=${expandedDb}`)
-    .then(res => res.json())
-    .then(data => {
-      setTablesByDb(prev => ({ ...prev, [expandedDb]: data.tables || [] }));
-      setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
-    })
-    .catch(() => {
-      setTablesByDb(prev => ({ ...prev, [expandedDb]: [] }));
-      setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
-    });
-}, [expandedDb, tablesByDb]);
-
-
     // Obtener tablas de una base de datos al expandirla
   const handleExpandDb = (db) => {
-  setExpandedDb(prev => (prev === db ? null : db));
-};
-
-
+    if (expandedDb === db) {
+      setExpandedDb(null);
+      return;
+    }
+    setExpandedDb(db);
+    if (!tablesByDb[db]) {
+      fetch(`http://127.0.0.1:5000/tables?db=${db}`)
+        .then(res => res.json())
+        .then(data => setTablesByDb(prev => ({ ...prev, [db]: data.tables || [] })))
+        .catch(() => setTablesByDb(prev => ({ ...prev, [db]: [] })));
+    }
+  };
+  
   const handleUploadCsv = async () => {
   const dbToUse = newDb || selectedDb;
   if (!dbToUse || !tableName || !csvFile) {
@@ -228,52 +217,10 @@ function App() {
 
       <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
         {/* Título principal */}
-        <div style={{ color: "#fff", marginBottom: 30 }}>
-        <h1 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span>🖥️</span>
-          localhost
-          <button
-            style={{
-              background: "none",
-              border: "none",
-              color: "#fff",
-              cursor: "pointer",
-              padding: 4,
-              borderRadius: "50%",
-              transition: "background 0.2s",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-            title="Refrescar bases de datos"
-            onClick={() => {
-              fetch('http://127.0.0.1:5000/databases')
-                .then(res => res.json())
-                .then(data => setDatabases(data.databases || []))
-                .catch(() => setDatabases([]));
-              fetch(`http://127.0.0.1:5000/tables?db=${expandedDb}`)
-                .then(res => res.json())
-                .then(data => {
-                  setTablesByDb(prev => ({ ...prev, [expandedDb]: data.tables || [] }));
-                  setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
-                })
-                .catch(() => {
-                  setTablesByDb(prev => ({ ...prev, [expandedDb]: [] }));
-                  setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
-                });
+           <div style={{ color: "#fff", marginBottom: 30 }}>
               
-            }}
-            onMouseOver={e => e.currentTarget.style.background = "#23263a"}
-            onMouseOut={e => e.currentTarget.style.background = "none"}
-          >
-            <img
-              src="https://img.icons8.com/ios-filled/24/ffffff/refresh--v1.png"
-              alt="Refrescar"
-              style={{ width: 18, height: 18, display: "block" }}
-            />
-          </button>
-        </h1>
-      </div>
+         <h1><span>🖥️ </span>localhost</h1>
+        </div>
       
 
         {/* Carpeta Databases */}
@@ -322,35 +269,32 @@ function App() {
                   {db}
                 </button>
                 {expandedDb === db && (
-                <div style={{ marginLeft: 16, borderLeft: "2px solid #333", paddingLeft: 8 }}>
-                  {loadingTables[db] ? (
-                    <p style={{ fontSize: "0.9em" }}>Cargando tablas...</p>
-                  ) : tablesByDb[db] && tablesByDb[db].length > 0 ? (
-                    tablesByDb[db].map((table) => (
-                      <button
-                        key={table}
-                        className="history-btn"
-                        style={{
-                          fontSize: "0.95em",
-                          background: "#23263a",
-                          margin: "3px 0",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6
-                        }}
-                        title={`Ver tablas de ${db}`}
-                      >
-                        <span style={{ fontSize: 15 }}>🗒️</span>
-                        {table}
-                      </button>
-                    ))
-                  ) : (
-                    <p style={{ fontSize: "0.9em" }}>No hay tablas.</p>
-                  )}
-                </div>
-              )}
-
-
+                  <div style={{ marginLeft: 16, borderLeft: "2px solid #333", paddingLeft: 8 }}>
+                    {tablesByDb[db] && tablesByDb[db].length > 0 ? (
+                      tablesByDb[db].map((table) => (
+                        <button
+                          key={table}
+                          className="history-btn"
+                          style={{
+                            fontSize: "0.95em",
+                            background: "#23263a",
+                            margin: "3px 0",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6
+                          }}
+                          onClick={() => alert(`Cargar datos de la tabla ${table}`)} // Aquí cambias la lógica según tu app
+                          title={`Ver datos de ${table}`}
+                        >
+                          <span style={{ fontSize: 15 }}>🗒️</span>
+                          {table}
+                        </button>
+                      ))
+                    ) : (
+                      <p style={{ fontSize: "0.9em" }}>No hay tablas.</p>
+                    )}
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -368,7 +312,7 @@ function App() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v18l15-9-15-9z" /></svg>
 
               </button>
-              <label  
+              <label   htmlFor="upload-csv"
                 className="upload-btn"
                 style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                 onClick={() => setShowUpload(true)}
