@@ -96,7 +96,8 @@ function App() {
   const [tablesByDb, setTablesByDb] = useState({});
   const [expandedDb, setExpandedDb] = useState(null);
   const [isDbListOpen, setIsDbListOpen] = useState(false);
-  
+  const [sidebarWidth, setSidebarWidth] = useState(200);
+const [isResizing, setIsResizing] = useState(false);
 
   // Obtener bases de datos al montar
   useEffect(() => {

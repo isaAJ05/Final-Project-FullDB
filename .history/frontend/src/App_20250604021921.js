@@ -96,7 +96,7 @@ function App() {
   const [tablesByDb, setTablesByDb] = useState({});
   const [expandedDb, setExpandedDb] = useState(null);
   const [isDbListOpen, setIsDbListOpen] = useState(false);
-  
+
 
   // Obtener bases de datos al montar
   useEffect(() => {

@@ -96,7 +96,7 @@ function App() {
   const [tablesByDb, setTablesByDb] = useState({});
   const [expandedDb, setExpandedDb] = useState(null);
   const [isDbListOpen, setIsDbListOpen] = useState(false);
-  
+
 
   // Obtener bases de datos al montar
   useEffect(() => {
@@ -192,10 +192,32 @@ function App() {
       <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
         {/* Título principal */}
            <div style={{ color: "#fff", marginBottom: 30 }}>
-              
-         <h1><span>🖥️ </span>localhost</h1>
+        {/* Título principal */}
+        <div style={{
+          fontSize: "1.5em",
+          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          letterSpacing: 1,
+          marginBottom: 8
+        }}>
+          <span style={{ fontSize: 20, marginRight: 4 }}>🛠️</span>
+          Query Tool
         </div>
-      
+
+  {/* Línea de host - mismo tamaño que 'Databases' */}
+  <div style={{
+    fontSize: "1.1em",
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    fontWeight: "bold"
+  }}>
+    <span style={{ fontSize: 16 }}>🖥️</span>
+    localhost
+  </div>
+</div>
 
         {/* Carpeta Databases */}
         <button

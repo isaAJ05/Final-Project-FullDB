@@ -96,8 +96,17 @@ function App() {
   const [tablesByDb, setTablesByDb] = useState({});
   const [expandedDb, setExpandedDb] = useState(null);
   const [isDbListOpen, setIsDbListOpen] = useState(false);
-  
-
+  const [sidebarWidth, setSidebarWidth] = useState(200);
+  const [isResizing, setIsResizing] = useState(false);
+  // Funciones para manejar el resize
+  const startResizing = () => setIsResizing(true);
+  const stopResizing = () => setIsResizing(false);
+  const handleResizing = (e) => {
+    if (isResizing) {
+      const newWidth = Math.max(140, e.clientX); // mínimo 140px
+      setSidebarWidth(newWidth > 400 ? 400 : newWidth); // máximo 400px
+    }
+  };
   // Obtener bases de datos al montar
   useEffect(() => {
     fetch('http://127.0.0.1:5000/databases')
@@ -120,6 +129,15 @@ function App() {
         .catch(() => setTablesByDb(prev => ({ ...prev, [db]: [] })));
     }
   };
+
+  useEffect(() => {
+  window.addEventListener("mousemove", handleResizing);
+  window.addEventListener("mouseup", stopResizing);
+  return () => {
+    window.removeEventListener("mousemove", handleResizing);
+    window.removeEventListener("mouseup", stopResizing);
+  };
+});
 
   const handleExtract = async () => {
     setError('');
@@ -178,7 +196,8 @@ function App() {
   }, [isDragging]);
 
   return (
-    <div className={`app-container ${isHistoryOpen ? "history-open" : ""}`}>
+    className={`app-container ${isHistoryOpen ? "history-open" : ""}`}
+    style={{ marginLeft: isHistoryOpen ? sidebarWidth : 0 }}>
       <nav className="navbar">
         <button
           className="toggle-history-btn"
@@ -189,8 +208,23 @@ function App() {
         <h1>Consultas SQL</h1>
       </nav>
 
-      <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
-        {/* Título principal */}
+      <aside
+  className={`side-menu ${isHistoryOpen ? "open" : ""}`}
+  style={{ width: sidebarWidth }}
+>
+  {/* ...contenido... */}
+  <div
+    style={{
+      position: "absolute",
+      top: 0,
+      right: 0,
+      width: 6,
+      height: "100%",
+      cursor: "ew-resize",
+      zIndex: 200,
+    }}
+    onMouseDown={startResizing}
+  />{/* Título principal */}
            <div style={{ color: "#fff", marginBottom: 30 }}>
               
          <h1><span>🖥️ </span>localhost</h1>

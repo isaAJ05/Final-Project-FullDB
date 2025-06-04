@@ -95,8 +95,6 @@ function App() {
   const [databases, setDatabases] = useState([]);
   const [tablesByDb, setTablesByDb] = useState({});
   const [expandedDb, setExpandedDb] = useState(null);
-  const [isDbListOpen, setIsDbListOpen] = useState(false);
-  
 
   // Obtener bases de datos al montar
   useEffect(() => {
@@ -191,90 +189,94 @@ function App() {
 
       <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
         {/* Título principal */}
-           <div style={{ color: "#fff", marginBottom: 30 }}>
-              
-         <h1><span>🖥️ </span>localhost</h1>
+        <div style={{
+          fontSize: "1.4em",
+          fontWeight: "bold",
+          color: "#fff",
+          marginBottom: 18,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          letterSpacing: 1
+        }}>
+          <svg width="22" height="22" fill="none" stroke="currentColor" style={{marginRight: 6}}><rect x="3" y="5" width="16" height="12" rx="3" strokeWidth="2"/></svg>
+          LOCALHOST
         </div>
-      
 
         {/* Carpeta Databases */}
         <button
           className="history-btn"
           style={{
             fontWeight: "bold",
-            background: isDbListOpen ? "#22263a" : undefined,
+            background: expandedDb === null ? "#22263a" : undefined,
             display: "flex",
             alignItems: "center",
             gap: 8,
             fontSize: "1.1em",
             marginBottom: 8
           }}
-          onClick={() => setIsDbListOpen(!isDbListOpen)}
+          onClick={() => setExpandedDb(expandedDb === null ? "" : null)}
           title="Mostrar bases de datos"
         >
-          <span style={{ fontSize: 18 }}>{isDbListOpen ? "📂" : "📁"}</span>
+          <span style={{fontSize: 18}}>{expandedDb === null ? "📂" : "📁"}</span>
           Databases
         </button>
 
-
         {/* Lista de bases de datos y tablas */}
-        {isDbListOpen && (
-        <div style={{ marginLeft: 16, borderLeft: "2px solid #333", paddingLeft: 8 }}>
-          {databases.length === 0 ? (
-            <p style={{ fontSize: "0.95em" }}>No hay bases de datos.</p>
-          ) : (
-            databases.map((db) => (
-              <div key={db}>
-                <button
-                  className="history-btn"
-                  style={{
-                    fontWeight: expandedDb === db ? "bold" : "normal",
-                    background: expandedDb === db ? "#23263a" : undefined,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6
-                  }}
-                  onClick={() => setExpandedDb(expandedDb === db ? null : db)}
-                  title={`Ver tablas de ${db}`}
-                >
-                  <span style={{ fontSize: 16 }}>
-                    {expandedDb === db ? "📂" : "📁"}
-                  </span>
-                  {db}
-                </button>
-                {expandedDb === db && (
-                  <div style={{ marginLeft: 16, borderLeft: "2px solid #333", paddingLeft: 8 }}>
-                    {tablesByDb[db] && tablesByDb[db].length > 0 ? (
-                      tablesByDb[db].map((table) => (
-                        <button
-                          key={table}
-                          className="history-btn"
-                          style={{
-                            fontSize: "0.95em",
-                            background: "#23263a",
-                            margin: "3px 0",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6
-                          }}
-                          onClick={() => alert(`Cargar datos de la tabla ${table}`)} // Aquí cambias la lógica según tu app
-                          title={`Ver datos de ${table}`}
-                        >
-                          <span style={{ fontSize: 15 }}>🗒️</span>
-                          {table}
-                        </button>
-                      ))
-                    ) : (
-                      <p style={{ fontSize: "0.9em" }}>No hay tablas.</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
+        {expandedDb === null && (
+          <div style={{ marginLeft: 16, borderLeft: "2px solid #333", paddingLeft: 8 }}>
+            {databases.length === 0 ? (
+              <p style={{ fontSize: "0.95em" }}>No hay bases de datos.</p>
+            ) : (
+              databases.map((db) => (
+                <div key={db}>
+                  <button
+                    className="history-btn"
+                    style={{
+                      fontWeight: expandedDb === db ? "bold" : "normal",
+                      background: expandedDb === db ? "#23263a" : undefined,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6
+                    }}
+                    onClick={() => handleExpandDb(db)}
+                    title={`Ver tablas de ${db}`}
+                  >
+                    <span style={{fontSize: 16}}>{expandedDb === db ? "📂" : "📁"}</span>
+                    {db}
+                  </button>
+                  {expandedDb === db && (
+                    <div style={{ marginLeft: 16, borderLeft: "2px solid #333", paddingLeft: 8 }}>
+                      {tablesByDb[db] && tablesByDb[db].length > 0 ? (
+                        tablesByDb[db].map((table) => (
+                          <button
+                            key={table}
+                            className="history-btn"
+                            style={{
+                              fontSize: "0.95em",
+                              background: "#23263a",
+                              margin: "3px 0",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6
+                            }}
+                  
+                            title={`Ver datos de ${table}`}
+                          >
+                            <span style={{fontSize: 15}}>🗂️</span>
+                            {table}
+                          </button>
+                        ))
+                      ) : (
+                        <p style={{ fontSize: "0.9em" }}>No hay tablas.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </aside>
 
       <div className="main-content">

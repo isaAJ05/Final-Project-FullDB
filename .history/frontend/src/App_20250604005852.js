@@ -95,8 +95,6 @@ function App() {
   const [databases, setDatabases] = useState([]);
   const [tablesByDb, setTablesByDb] = useState({});
   const [expandedDb, setExpandedDb] = useState(null);
-  const [isDbListOpen, setIsDbListOpen] = useState(false);
-  
 
   // Obtener bases de datos al montar
   useEffect(() => {
@@ -189,92 +187,22 @@ function App() {
         <h1>Consultas SQL</h1>
       </nav>
 
-      <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
-        {/* Título principal */}
-           <div style={{ color: "#fff", marginBottom: 30 }}>
-              
-         <h1><span>🖥️ </span>localhost</h1>
-        </div>
-      
-
-        {/* Carpeta Databases */}
-        <button
-          className="history-btn"
-          style={{
-            fontWeight: "bold",
-            background: isDbListOpen ? "#22263a" : undefined,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: "1.1em",
-            marginBottom: 8
-          }}
-          onClick={() => setIsDbListOpen(!isDbListOpen)}
-          title="Mostrar bases de datos"
-        >
-          <span style={{ fontSize: 18 }}>{isDbListOpen ? "📂" : "📁"}</span>
-          Databases
-        </button>
-
-
-        {/* Lista de bases de datos y tablas */}
-        {isDbListOpen && (
-        <div style={{ marginLeft: 16, borderLeft: "2px solid #333", paddingLeft: 8 }}>
-          {databases.length === 0 ? (
-            <p style={{ fontSize: "0.95em" }}>No hay bases de datos.</p>
-          ) : (
-            databases.map((db) => (
-              <div key={db}>
-                <button
-                  className="history-btn"
-                  style={{
-                    fontWeight: expandedDb === db ? "bold" : "normal",
-                    background: expandedDb === db ? "#23263a" : undefined,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6
-                  }}
-                  onClick={() => setExpandedDb(expandedDb === db ? null : db)}
-                  title={`Ver tablas de ${db}`}
-                >
-                  <span style={{ fontSize: 16 }}>
-                    {expandedDb === db ? "📂" : "📁"}
-                  </span>
-                  {db}
-                </button>
-                {expandedDb === db && (
-                  <div style={{ marginLeft: 16, borderLeft: "2px solid #333", paddingLeft: 8 }}>
-                    {tablesByDb[db] && tablesByDb[db].length > 0 ? (
-                      tablesByDb[db].map((table) => (
-                        <button
-                          key={table}
-                          className="history-btn"
-                          style={{
-                            fontSize: "0.95em",
-                            background: "#23263a",
-                            margin: "3px 0",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6
-                          }}
-                          onClick={() => alert(`Cargar datos de la tabla ${table}`)} // Aquí cambias la lógica según tu app
-                          title={`Ver datos de ${table}`}
-                        >
-                          <span style={{ fontSize: 15 }}>🗒️</span>
-                          {table}
-                        </button>
-                      ))
-                    ) : (
-                      <p style={{ fontSize: "0.9em" }}>No hay tablas.</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
+       <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
+        <h3>Tablas</h3>
+        {tables.length === 0 ? (
+          <p>No se encontraron tablas.</p>
+        ) : (
+          tables.map((table, idx) => (
+            <button
+              key={idx}
+              className="history-btn"
+              onClick={() => setQuery(`SELECT * FROM ${table} LIMIT 10`)}
+              title={`Ver datos de ${table}`}
+            >
+              {table}
+            </button>
+          ))
+        )}
       </aside>
 
       <div className="main-content">

@@ -39,7 +39,7 @@
   z-index: 100;
   left: 0;
   top: 0;
-  width: 200px; /* Puedes ajustar el ancho */
+  width: 220px; /* Puedes ajustar el ancho */
   height: 100vh;
   background-color: #181c27;
   padding: 10px;
@@ -48,15 +48,7 @@
   transition: transform 0.3s ease-in-out;
   color: #f0f0f0;
 }
-.app-container {
-  /* Quita el margin-left fijo */
-  margin-left: 0;
-  transition: margin-left 0.3s;
-}
 
-.app-container.history-open {
-  margin-left: 220px; /* Solo cuando el sidebar está abierto */
-}
 .side-menu.open {
   transform: translateX(0);
 }
