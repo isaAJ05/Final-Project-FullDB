@@ -376,13 +376,7 @@ function App() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" /></svg>
 
               </label>
-              <input
-                type="file"
-                id="upload-csv"
-                accept=".csv"
-                style={{ display: 'none' }}
-                onChange={e => setCsvFile(e.target.files[0])}
-              />
+              
               
               {showUpload && (
                 <div className="modal-bg">
@@ -397,15 +391,34 @@ function App() {
                     </div>
                     <div>
                       <label>O crea nueva base:</label>
-                      <input value={newDb} onChange={e => setNewDb(e.target.value)} placeholder="Nueva base" />
+                      <input name="new-db" value={newDb} onChange={e => setNewDb(e.target.value)} placeholder="Nueva base" />
                     </div>
                     <div>
                       <label>Nombre de la tabla:</label>
-                      <input value={tableName} onChange={e => setTableName(e.target.value)} placeholder="Nombre tabla" />
+                      <input name="table-name" value={tableName} onChange={e => setTableName(e.target.value)} placeholder="Nombre tabla" />
                     </div>
                     <div>
                       <label>Archivo CSV:</label>
-                      <input type="file" accept=".csv" onChange={e => setCsvFile(e.target.files[0])} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                          type="button"
+                          className="upload-btn"
+                          style={{ minWidth: 120 }}
+                          onClick={() => document.getElementById('modal-upload-csv').click()}
+                        >
+                          Seleccionar archivo
+                        </button>
+                        <span style={{ color: '#bfc7d5', fontSize: '0.98em', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}>
+                          {csvFile ? csvFile.name : 'Ningún archivo seleccionado'}
+                        </span>
+                        <input
+                          type="file"
+                          id="modal-upload-csv"
+                          accept=".csv"
+                          style={{ display: 'none' }}
+                          onChange={e => setCsvFile(e.target.files[0])}
+                        />
+                      </div>
                     </div>
                     <button onClick={handleUploadCsv}>Subir</button>
                     <button onClick={() => setShowUpload(false)}>Cancelar</button>
@@ -441,7 +454,7 @@ function App() {
                   </tbody>
                 </table>
               ) : result && result.message ? (
-                <div className="message-success">{result.message}</div>
+                "Tablas y Resultados."
               ) : result ? (
                 <pre>{JSON.stringify(result, null, 2)}</pre>
               ) : (
@@ -449,7 +462,13 @@ function App() {
               )}
             </div>
 
-            <div className="errors-panel">{error ? error : "Output"}</div>
+            <div className="errors-panel">
+              {error ? (
+                <div className="message-error">{error}</div>
+              ) : (result && result.message ? (
+                <div className="message-success">{result.message}</div>
+              ) : "Output")}
+            </div>
           </div>
         </div>
       </div>

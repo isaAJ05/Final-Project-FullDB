@@ -260,6 +260,15 @@
   border: 1px solid #2e8b57;
   border-radius: 6px;
 }
+
+.message-error {
+  background-color: #4f1f1f;
+  color: #f2b6b6;
+  padding: 10px;
+  border: 1px solid #8b2e2e;
+  border-radius: 6px;
+}
+
 .main-content {
   display: flex;
   flex: 1;
@@ -312,13 +321,153 @@
 .results-panel::-webkit-scrollbar-thumb:hover {
   background-color: #680010; /* Color más claro al pasar el mouse */
 }
+/* Modal de subir CSV */
 .modal-bg {
-  position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
-  z-index: 999;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(24, 28, 39, 0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .modal {
-  background: #23263a; padding: 24px; border-radius: 10px; color: #fff; min-width: 320px;
+  background: #181c27;
+  color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 24px #000a;
+  padding: 32px 28px 24px 28px;
+  min-width: 340px;
+  max-width: 95vw;
+  border: 2px solid #9b0018;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
-.modal input, .modal select { width: 100%; margin-bottom: 10px; }
-.modal button { margin-right: 10px; }
+.modal h3 {
+  margin: 0 0 10px 0;
+  color: #fff;
+  font-size: 1.3em;
+  letter-spacing: 1px;
+}
+.modal label {
+  color: #fff;
+  font-size: 1em;
+  margin-bottom: 2px;
+  display: block;
+}
+.modal input[type="text"],
+.modal input[type="file"],
+.modal select,
+.modal textarea {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 5px;
+  border: 1px solid #333;
+  background: #23263a;
+  color: #fff !important;
+  margin-bottom: 10px;
+  font-size: 1em;
+  box-sizing: border-box;
+}
+.modal input[type="file"] {
+  background: #23263a !important;
+  color: #fff !important;
+  border: 1px solid #333;
+  border-radius: 5px;
+  padding: 7px 10px;
+  font-size: 1em;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  /* Oculta el texto nativo en navegadores modernos, pero deja el botón visible */
+  /* Para Chrome/Webkit */
+  ::file-selector-button {
+    background: #9b0018;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 7px 16px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  ::file-selector-button:hover {
+    background: #680010;
+  }
+  /* Para Firefox */
+  &::-ms-browse {
+    background: #9b0018;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 7px 16px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+}
+
+.modal textarea {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 5px;
+  border: 1px solid #333;
+  background: #23263a;
+  color: #fff;
+  margin-bottom: 10px;
+  font-size: 1em;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* Placeholder para inputs y textarea en el modal */
+.modal input::placeholder,
+.modal textarea::placeholder {
+  color: #bfc7d5;
+  opacity: 1;
+}
+.modal button {
+  background: #9b0018;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 18px;
+  margin-right: 8px;
+  margin-top: 8px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.modal button:hover {
+  background: #680010;
+}
+
+/* Inputs destacados en el modal de subida de CSV */
+.modal input[name="new-db"],
+.modal input[name="table-name"],
+.modal select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  font-size: 1em;
+  background: #23263a;
+  color: #fff;
+  border: 1.5px solid #9b0018;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  font-family: 'Segoe UI', sans-serif;
+  transition: border 0.2s, box-shadow 0.2s;
+  appearance: none;
+}
+.modal input[name="new-db"]:focus,
+.modal input[name="table-name"]:focus,
+.modal select:focus {
+  outline: none;
+  border: 2px solid #ff1744;
+  box-shadow: 0 0 0 2px #9b001855;
+}
