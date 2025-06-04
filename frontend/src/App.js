@@ -1,88 +1,134 @@
-import React, { useState, useEffect } from 'react';
-import './App.css';
-import AceEditor from "react-ace";
+import React, { useState, useEffect, useRef } from "react";
+import "./App.css";
+import { EditorView } from "@codemirror/view";
+import { EditorState } from "@codemirror/state";
+import { sql } from "@codemirror/lang-sql";
+import { autocompletion } from "@codemirror/autocomplete";
+import { syntaxHighlighting } from "@codemirror/language";
+import { defaultHighlightStyle } from "@codemirror/language";
+import { keymap } from "@codemirror/view";
+import { defaultKeymap } from "@codemirror/commands";
+import { oneDark } from "@codemirror/theme-one-dark";
 
-// Importar modo SQL y tema
-import "ace-builds/src-noconflict/mode-sql";
-import "ace-builds/src-noconflict/theme-monokai";
+import { createTheme } from '@uiw/codemirror-themes';
+
+import { tags as t } from '@lezer/highlight';
+
+const myTheme = createTheme({
+  theme: 'light',
+  settings: {
+    background: '#ffffff',
+    backgroundImage: '',
+    foreground: '#75baff',
+    caret: '#ffffff',
+    selection: '#036dd626',
+    selectionMatch: '#036dd626',
+    lineHighlight: '#8a91991a',
+    gutterBorder: '1px solid #ffffff10',
+    gutterBackground: '#fff',
+    gutterForeground: '#8a919966',
+  },
+  styles: [
+    { tag: t.comment, color: '#787b8099' },
+    { tag: t.variableName, color: '#0080ff' },
+    { tag: [t.string, t.special(t.brace)], color: '#e17e00' },
+    { tag: t.number, color: '#5c6166' },
+    { tag: t.bool, color: '#5c6166' },
+    { tag: t.null, color: '#5c6166' },
+    { tag: t.keyword, color: '#9b0018' },
+    { tag: t.operator, color: '#00aed5' },
+    { tag: t.className, color: '#5c6166' },
+    { tag: t.definition(t.typeName), color: '#5c6166' },
+    { tag: t.typeName, color: '#5c6166' },
+    { tag: t.angleBracket, color: '#ffffff' },
+    { tag: t.tagName, color: '#5c6166' },
+    { tag: t.attributeName, color: '#5c6166' }, 
+  ],
+});
+
+
+function SqlEditor({ query, setQuery }) {
+  const editorRef = useRef(null);
+  const viewRef = useRef(null);
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: query,
+        extensions: [
+          sql(),
+          keymap.of(defaultKeymap),
+          myTheme,
+          syntaxHighlighting(defaultHighlightStyle),
+          EditorView.updateListener.of((update) => {
+            if (update.docChanged) {
+              setQuery(update.state.doc.toString());
+            }
+          }),
+        ],
+      }),
+      parent: editorRef.current,
+    });
+
+    viewRef.current = view;
+
+    return () => view.destroy();
+  }, []);
+
+  return <div ref={editorRef} className="sql-editor-container" />;
+}
 
 function App() {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [result, setResult] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [history, setHistory] = useState([]);
-  const [leftWidth, setLeftWidth] = useState(50); // in percent
+  const [leftWidth, setLeftWidth] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleExtract = async () => {
     setError('');
     setResult(null);
-    try {
-      const response = await fetch('http://127.0.0.1:5000/execute', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ query })
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data.error || 'Error desconocido');
-      } else {
-        setResult(data);
-        if (query.trim() !== '') {
-          setHistory(prev => {
-            if (prev.length === 0 || prev[prev.length - 1] !== query) {
-              return [...prev, query];
-            }
-            return prev;
-          });
-        }
-      }
-    } catch (err) {
-      setError('No se pudo conectar con el backend');
-    }
-  };
+    // Divide por ; y filtra vacíos
+    const queries = query
+      .split(';')
+      .map(q => q.trim())
+      .filter(q => q.length > 0);
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    if (!file.name.endsWith('.csv')) {
-      alert('Por favor, selecciona un archivo CSV válido.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target.result;
-      const lines = text.trim().split('\n');
-      const columns = lines[0].split(',');
-      const rows = lines.slice(1).map(line => {
-        const values = line.split(',');
-        const rowObj = {};
-        columns.forEach((col, idx) => {
-          rowObj[col.trim()] = values[idx]?.trim() || '';
+    let lastResult = null;
+    for (let q of queries) {
+      try {
+        const response = await fetch('http://127.0.0.1:5000/execute', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ query: q })
         });
-        return rowObj;
-      });
-      setResult({ columns, rows });
-    };
-    reader.readAsText(file);
+        const data = await response.json();
+        if (!response.ok) {
+          setError(data.error || 'Error desconocido');
+          break; // Detén si hay error
+        } else {
+          lastResult = data;
+        }
+      } catch (err) {
+        setError('No se pudo conectar con el backend');
+        break;
+      }
+    }
+    setResult(lastResult);
   };
 
-  const handleHistoryClick = (item) => {
-    setQuery(item);
-    setIsHistoryOpen(false);
-  };
-
-  // Resizer handlers
   const startDragging = () => setIsDragging(true);
   const stopDragging = () => setIsDragging(false);
 
   const handleDragging = (e) => {
     if (!isDragging) return;
-    const container = document.querySelector('.main-content');
+    const container = document.querySelector(".main-content");
     const containerWidth = container.offsetWidth;
     const newLeftWidth = (e.clientX / containerWidth) * 100;
     if (newLeftWidth > 10 && newLeftWidth < 90) {
@@ -91,30 +137,31 @@ function App() {
   };
 
   useEffect(() => {
-    window.addEventListener('mousemove', handleDragging);
-    window.addEventListener('mouseup', stopDragging);
+    window.addEventListener("mousemove", handleDragging);
+    window.addEventListener("mouseup", stopDragging);
     return () => {
-      window.removeEventListener('mousemove', handleDragging);
-      window.removeEventListener('mouseup', stopDragging);
+      window.removeEventListener("mousemove", handleDragging);
+      window.removeEventListener("mouseup", stopDragging);
     };
   }, [isDragging]);
 
   return (
-    <div className={`app-container ${isHistoryOpen ? 'history-open' : ''}`}>
-      {/* Navbar */}
+    <div className={`app-container ${isHistoryOpen ? "history-open" : ""}`}>
       <nav className="navbar">
-        <button className="toggle-history-btn" onClick={() => setIsHistoryOpen(!isHistoryOpen)}>
-          {isHistoryOpen ? '✖' : '☰'}
+        <button
+          className="toggle-history-btn"
+          onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+        >
+          {isHistoryOpen ? "✖" : "☰"}
         </button>
         <h1>Consultas SQL</h1>
       </nav>
 
-      {/* Sidebar - Historial */}
-      <aside className={`side-menu ${isHistoryOpen ? 'open' : ''}`}>
+      <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
         <h3>Historial</h3>
         <button
           className="history-btn"
-          onClick={() => handleHistoryClick('SELECT * FROM productos LIMIT 10')}
+          onClick={() => setQuery("SELECT * FROM productos LIMIT 10")}
         >
           Query de prueba
         </button>
@@ -125,43 +172,30 @@ function App() {
             <button
               key={idx}
               className="history-btn"
-              onClick={() => handleHistoryClick(item)}
+              onClick={() => setQuery(item)}
               title="Copiar consulta al área de texto"
             >
-              {item.length > 30 ? item.substring(0, 27) + '...' : item}
+              {item.length > 30 ? item.substring(0, 27) + "..." : item}
             </button>
           ))
         )}
       </aside>
 
-      {/* Contenido principal */}
       <div className="main-content">
         <div className="left-panel" style={{ width: `${leftWidth}%` }}>
           <div className="query-input">
-            <textarea
-              placeholder="Escribe tu consulta aquí..."
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-            />
+            <SqlEditor query={query} setQuery={setQuery} />
             <div className="buttons-row">
               <button onClick={handleExtract}>Extraer consulta</button>
-              <label htmlFor="upload-csv" className="upload-btn" title="Subir archivo CSV">
+              <label htmlFor="upload-csv" className="upload-btn">
                 Subir CSV
               </label>
-              <input
-                type="file"
-                id="upload-csv"
-                accept=".csv"
-                onChange={handleFileUpload}
-              />
+              <input type="file" id="upload-csv" accept=".csv" />
             </div>
           </div>
         </div>
 
-        <div
-          className="resizer"
-          onMouseDown={startDragging}
-        />
+        <div className="resizer" onMouseDown={startDragging} />
 
         <div className="right-panel" style={{ width: `${100 - leftWidth}%` }}>
           <div className="top-section">
@@ -170,7 +204,7 @@ function App() {
                 <table>
                   <thead>
                     <tr>
-                      {result.columns.map(col => (
+                      {result.columns.map((col) => (
                         <th key={col}>{col}</th>
                       ))}
                     </tr>
@@ -178,7 +212,7 @@ function App() {
                   <tbody>
                     {result.rows.map((row, idx) => (
                       <tr key={idx}>
-                        {result.columns.map(col => (
+                        {result.columns.map((col) => (
                           <td key={col}>{row[col]}</td>
                         ))}
                       </tr>
@@ -190,13 +224,11 @@ function App() {
               ) : result ? (
                 <pre>{JSON.stringify(result, null, 2)}</pre>
               ) : (
-                'Tablas y Resultados.'
+                "Tablas y Resultados."
               )}
             </div>
 
-            <div className="errors-panel">
-              {error ? error : 'Output'}
-            </div>
+            <div className="errors-panel">{error ? error : "Output"}</div>
           </div>
         </div>
       </div>

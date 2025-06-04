@@ -36,6 +36,7 @@
 /* Sidebar */
 .side-menu {
   position: absolute;
+  z-index: 10; 
   left: 0;
   top: 75px;
   bottom: 0;
@@ -98,28 +99,67 @@
   background-color: #181c27;
 }
 
-.query-input textarea {
-  width: 100%;
-  height: 100%;
-  resize: none;
-  padding: 10px;
-  box-sizing: border-box;
-  font-size: 16px;
-  background-color: #0f131c;
-  color: #ffffff;
-  border: 1px solid #9b0018;
-  border-radius: 8px;
-  font-family: 'Segoe UI', sans-serif;
-}
-.query-input textarea:focus {
-  outline: none;
-  border-color: #680010;
-}
 .query-input .buttons-row {
   display: flex;
   gap: 10px;
   margin-top: 10px;
 }
+
+/* Personalización de CodeMirror dentro de .sql-editor-container */
+.sql-editor-container .cm-editor {
+  height: 800px;
+  background-color: #0f131c;
+  color: #ffffff;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 17px;
+  border: 1px solid #9b0018;
+  
+  border-radius: 8px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.sql-editor-container .cm-scroller {
+  overflow: auto;
+}
+
+/* Estilo para las líneas de selección */
+.cm-focused .cm-selectionBackground {
+  background-color: rgba(155, 0, 24, 0.4) !important;
+}
+.cm-activeLine {
+  background-color: white !important;
+  border-left: 3px solid #007acc;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+}
+.cm-activeLine > span {
+  color: white !important;
+}
+
+
+
+/* Estilo para el cursor */
+.cm-cursor {
+  border-left: 1.5px solid #ffffff;
+  background-color: transparent; /* Asegura que el fondo del cursor sea transparente */
+  width: 1.5px; /* Ancho del cursor */
+}
+
+/* Highlight para palabras clave (usa el tema por defecto y lo adapta) */
+.cm-keyword {
+  color: #00ff0d;
+  font-weight: bold;
+}
+
+.cm-string {
+  color: #ffcc66;
+}
+
+.cm-comment {
+  color: #888888;
+  font-style: italic;
+}
+
 
 .query-input button,
 .upload-btn {
