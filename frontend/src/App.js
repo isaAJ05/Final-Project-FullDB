@@ -135,6 +135,21 @@ function App() {
   // Para cargar columnas de una tabla
   const [selectedTableColumns, setSelectedTableColumns] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
+  const [mainContentAnim, setMainContentAnim] = useState("");
+  const [user, setUser] = useState(null);
+
+  const prevHistoryOpen = useRef(isHistoryOpen);
+
+  useEffect(() => {
+    if (isHistoryOpen !== prevHistoryOpen.current) {
+      if (isHistoryOpen) {
+        setMainContentAnim("slide-in");
+      } else {
+        setMainContentAnim("slide-out");
+      }
+      prevHistoryOpen.current = isHistoryOpen;
+    }
+  }, [isHistoryOpen]);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -379,19 +394,30 @@ useEffect(() => {
             transform: 'translate(-50%, -50%)',
             zIndex: 20
           }}
-          onSubmit={e => {
+          onSubmit={async e => {
             e.preventDefault();
             const user = loginUser.trim().toLowerCase();
             const pass = loginPass.trim();
-            if (user === "admin" && pass === "admin") {
-              setLoginFade(true);
-              setLoginError("");
-              setTimeout(() => {
-                setIsLoggedIn(true);
-                setLoginFade(false);
-              }, 700);
-            } else {
-              setLoginError("Usuario o contraseña incorrectos");
+            setLoginError("");
+            // Lógica nueva: petición al backend
+            try {
+              const res = await fetch("http://127.0.0.1:5000/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: user, password: pass })
+              });
+              const data = await res.json();
+              if (res.ok && data.success) {
+                setLoginFade(true);
+                setTimeout(() => {
+                  setIsLoggedIn(true);
+                  setLoginFade(false);
+                }, 700);
+              } else {
+                setLoginError(data.error || "Usuario o contraseña incorrectos");
+              }
+            } catch (err) {
+              setLoginError("No se pudo conectar con el backend");
             }
           }}
         >
@@ -436,6 +462,10 @@ useEffect(() => {
             Invitado
             </button>
           </div>
+          <GoogleLoginButton onLogin={(user) => {
+            setIsLoggedIn(true);
+            console.log("Usuario logueado con Google:", user);
+          }} />
           <button
             type="button"
             style={{ background: 'none', color: '#75baff', border: 'none', marginTop: 8, cursor: 'pointer', textDecoration: 'underline', fontSize: 15 }}
@@ -447,11 +477,7 @@ useEffect(() => {
             }}
           >
             Crear una cuenta
-            </button>
-                <GoogleLoginButton onLogin={(user) => {
-        setIsLoggedIn(true);
-        console.log("Usuario logueado con Google:", user);
-      }} />
+          </button>
 
         </form>
         {/* Registro */}
@@ -481,19 +507,35 @@ useEffect(() => {
               }
               setRegisterAnim("");
             }}
-            onSubmit={e => {
+            onSubmit={async e => {
               e.preventDefault();
               if (!registerUser.trim() || !registerPass.trim()) {
                 setRegisterError('Completa todos los campos');
                 setRegisterSuccess("");
                 return;
               }
-              // Aquí iría la lógica real de registro (ejemplo local)
-              setRegisterSuccess('Cuenta creada correctamente. Ahora puedes iniciar sesión.');
-              setRegisterError("");
-              setRegisterUser("");
-              setRegisterPass("");
-              setTimeout(() => setShowRegister(false), 1500);
+              // Nuevo: petición al backend para registrar usuario
+              try {
+                const res = await fetch("http://127.0.0.1:5000/register", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ username: registerUser.trim().toLowerCase(), password: registerPass })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                  setRegisterSuccess('Cuenta creada correctamente. Ahora puedes iniciar sesión.');
+                  setRegisterError("");
+                  setRegisterUser("");
+                  setRegisterPass("");
+                  setTimeout(() => setShowRegister(false), 1500);
+                } else {
+                  setRegisterError(data.error || 'No se pudo crear la cuenta');
+                  setRegisterSuccess("");
+                }
+              } catch (err) {
+                setRegisterError('No se pudo conectar con el backend');
+                setRegisterSuccess("");
+              }
             }}
           >
             <h2 style={{ color: '#fff', marginBottom: 8, textAlign: 'center', letterSpacing: 1 }}>Crear cuenta</h2>
@@ -666,7 +708,7 @@ useEffect(() => {
               <div style={{ color: lightTheme ? "#23263a" : "#fff", marginBottom: 30 }}>
               <h1 style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span>🖥️</span>
-                <span style={{ color: lightTheme ? "#23263a" : "#fff", transition: "color 0.3s" }}>localhost</span>
+                <span style={{ color: lightTheme ? "#23263a" : "#fff", transition: "color 0.3s" }}>Historial</span>
                 <button
                 style={{
                   background: "none",

@@ -571,15 +571,24 @@ def execute_sql():
 # ENDPOINTS DE ADMINISTRACIÓN
 # ==========================
 
-@app.route("/login")
+@app.route("/login", methods=["POST"])
 def login():
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        redirect_uri="http://localhost:5000/oauth2callback"
-    )
-    auth_url, _ = flow.authorization_url(prompt="consent")
-    return redirect(auth_url)
+    data = request.get_json()
+    username = data.get('username', '').strip().lower()
+    password = data.get('password', '').strip()
+    if not username or not password:
+        return jsonify({'success': False, 'error': 'Usuario y contraseña requeridos'}), 400
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, 'r', encoding='utf-8') as f:
+            try:
+                users = json.load(f)
+            except Exception:
+                users = {}
+    else:
+        users = {}
+    if username not in users or users[username] != password:
+        return jsonify({'success': False, 'error': 'Usuario o contraseña incorrectos'}), 401
+    return jsonify({'success': True}), 200
 
 @app.route("/oauth2callback")
 def oauth2callback():
@@ -722,8 +731,31 @@ def get_columns():
     return jsonify({'columns': table_data["columns"]})
 
 # ==========================
-# ENDPOINTS EXTRA
+# ENDPOINT DE REGISTRO DE USUARIO
 # ==========================
+USERS_FILE = os.path.join(os.path.dirname(__file__), 'users.json')
+
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    username = data.get('username', '').strip().lower()
+    password = data.get('password', '').strip()
+    if not username or not password:
+        return jsonify({'success': False, 'error': 'Usuario y contraseña requeridos'}), 400
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, 'r', encoding='utf-8') as f:
+            try:
+                users = json.load(f)
+            except Exception:
+                users = {}
+    else:
+        users = {}
+    if username in users:
+        return jsonify({'success': False, 'error': 'El usuario ya existe'}), 400
+    users[username] = password
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(users, f, ensure_ascii=False, indent=2)
+    return jsonify({'success': True}), 200
 
 @app.route('/upload_csv', methods=['POST'])
 def upload_csv():

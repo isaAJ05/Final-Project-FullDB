@@ -8,6 +8,7 @@
   font-family: 'Segoe UI', sans-serif;
   background-color: #13132b;
   color: #f0f0f0;
+  transition: margin-left 0.7s cubic-bezier(0.77,0,0.175,1);
 }
 
 /* Navbar */
@@ -45,8 +46,12 @@
   padding: 10px;
   overflow-y: auto;
   transform: translateX(-100%);
-  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1);
+  transition: none !important;
   color: #f0f0f0;
+  will-change: transform;
+  transition-property: transform;
+  transition-duration: 0.7s;
+  transition-timing-function: cubic-bezier(0.77,0,0.175,1);
 }
 .app-container {
   /* Quita el margin-left fijo */
@@ -58,8 +63,12 @@
   margin-left: 220px; /* Solo cuando el sidebar está abierto */
 }
 .side-menu.open {
+  animation: slideSidebarIn 0.7s cubic-bezier(0.77,0,0.175,1) both;
   transform: translateX(0);
-  animation: sidebarBounceGlowIn 0.7s cubic-bezier(0.68,-0.55,0.27,1.55);
+}
+.side-menu:not(.open) {
+  animation: slideSidebarOut 0.7s cubic-bezier(0.77,0,0.175,1) both;
+  transform: translateX(-100%);
 }
 
 .side-menu h3 {
@@ -95,6 +104,36 @@
   overflow: hidden;
   border-top: 1px solid #333;
   background: radial-gradient(ellipse, #3e4863 10%, #181c27 100%);
+  transition: margin-left 0.7s cubic-bezier(0.77,0,0.175,1);
+}
+
+.main-content.slide-in {
+  animation: slideMainContentIn 0.7s cubic-bezier(0.77,0,0.175,1) both;
+}
+
+.main-content.slide-out {
+  animation: slideMainContentOut 0.7s cubic-bezier(0.77,0,0.175,1) both;
+}
+
+@keyframes slideMainContentIn {
+  from {
+    transform: translateX(-220px);
+    opacity: 0.7;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes slideMainContentOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-220px);
+    opacity: 0.7;
+  }
 }
 
 /* Query Section (left) */
@@ -291,6 +330,7 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+  transition: margin-left 0.7s cubic-bezier(0.77,0,0.175,1);
 }
 
 .left-panel {
@@ -603,30 +643,7 @@
 }
 
 /* Animación de entrada para el sidebar mejorada */
-@keyframes sidebarBounceGlowIn {
-  0% {
-    opacity: 0;
-    transform: translateX(-60px) scale(0.92);
-    box-shadow: 0 0 0 0 #ff174455;
-    filter: blur(8px);
-  }
-  60% {
-    opacity: 1;
-    transform: translateX(10px) scale(1.04);
-    box-shadow: 0 0 32px 8px #ff174455;
-    filter: blur(1.5px);
-  }
-  80% {
-    transform: translateX(-4px) scale(0.98);
-    box-shadow: 0 0 16px 4px #9b001855;
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-    box-shadow: 0 0 8px 0 #9b001822;
-    filter: blur(0);
-  }
-}
+/* @keyframes sidebarBounceGlowIn { ... } */
 
 /* --- SMOOTH THEME TRANSITIONS --- */
 body, .app-container, .navbar, .side-menu, .main-content, .results-panel, .errors-panel, .modal, .sql-editor-container .cm-editor, .left-panel, .right-panel {
@@ -780,5 +797,25 @@ body.light-theme, .app-container.light-theme {
   100% {
     opacity: 1;
     transform: scale(1) rotate(0deg);
+  }
+}
+@keyframes slideSidebarIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.7;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes slideSidebarOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0.7;
   }
 }
