@@ -287,6 +287,24 @@ const handleShowColumns = (db, table) => {
   if (!res.ok) setError(data.error || "Error al subir CSV");
   else setResult(data);
   setShowUpload(false);
+  // Refresca la lista de bases y tablas tras subir CSV
+  refreshDatabases(dbToUse);
+};
+
+// Función para refrescar la lista de bases de datos y tablas
+const refreshDatabases = async (dbToRefresh = null) => {
+  // Actualiza bases de datos
+  fetch('http://127.0.0.1:5000/databases')
+    .then(res => res.json())
+    .then(data => setDatabases(data.databases || []))
+    .catch(() => setDatabases([]));
+  // Si se pasa una base, refresca sus tablas
+  if (dbToRefresh) {
+    fetch(`http://127.0.0.1:5000/tables?db=${dbToRefresh}`)
+      .then(res => res.json())
+      .then(data => setTablesByDb(prev => ({ ...prev, [dbToRefresh]: data.tables || [] })))
+      .catch(() => setTablesByDb(prev => ({ ...prev, [dbToRefresh]: [] })));
+  }
 };
 
   const handleExtract = async () => {
@@ -299,6 +317,10 @@ const handleShowColumns = (db, table) => {
       .filter(q => q.length > 0);
 
     let lastResult = null;
+    let dbCreated = false;
+    let tableCreated = false;
+    let dbNameCreated = null;
+    let tableDbName = null;
     for (let q of queries) {
       try {
         const response = await fetch('http://127.0.0.1:5000/execute', {
@@ -314,6 +336,19 @@ const handleShowColumns = (db, table) => {
           break; // Detén si hay error
         } else {
           lastResult = data;
+          // Detecta si la consulta es CREATE DATABASE o CREATE TABLE
+          const qUpper = q.toUpperCase();
+          if (qUpper.startsWith('CREATE DATABASE')) {
+            dbCreated = true;
+            // Extrae el nombre de la base
+            const match = q.match(/CREATE DATABASE\s+(\w+)/i);
+            if (match) dbNameCreated = match[1];
+          } else if (qUpper.startsWith('CREATE TABLE')) {
+            tableCreated = true;
+            // Extrae el nombre de la base si es CREATE TABLE db.table
+            const match = q.match(/CREATE TABLE\s+(\w+)\.(\w+)/i);
+            if (match) tableDbName = match[1];
+          }
         }
       } catch (err) {
         setError('No se pudo conectar con el backend');
@@ -321,6 +356,12 @@ const handleShowColumns = (db, table) => {
       }
     }
     setResult(lastResult);
+    // Si se creó una base o tabla, refresca la lista
+    if (dbCreated && dbNameCreated) {
+      refreshDatabases(dbNameCreated);
+    } else if (tableCreated && (selectedDb || tableDbName)) {
+      refreshDatabases(tableDbName || selectedDb);
+    }
   };
 
   const startDragging = () => setIsDragging(true);
@@ -597,7 +638,7 @@ useEffect(() => {
               >
               {isHistoryOpen ? "✖" : "☰"}
               </button>
-              <h1>Consultas SQL</h1>
+              <h1>QueryCraft</h1>
               <button
                 style={{
                   marginLeft: "auto",
