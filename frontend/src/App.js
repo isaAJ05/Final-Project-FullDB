@@ -130,6 +130,8 @@ function App() {
     return saved === "true";
   });
   const [showUserPanel, setShowUserPanel] = useState(false);
+  // Estado para animación de fade del panel de usuario
+  const [userPanelFade, setUserPanelFade] = useState(false);
 
   // Efecto para aplicar el tema claro/oscuro
   useEffect(() => {
@@ -527,23 +529,27 @@ useEffect(() => {
               </button>
               {/* User panel dropdown */}
               {showUserPanel && (
-                <div style={{
-                  position: "absolute",
-                  top: 48,
-                  right: 0,
-                  background: lightTheme ? "#fff" : "#181c27",
-                  color: lightTheme ? "#23263a" : "#fff",
-                  border: `1.5px solid ${lightTheme ? '#9b0018' : '#fff'}`,
-                  borderRadius: 8,
-                  boxShadow: "0 4px 24px #000a",
-                  minWidth: 180,
-                  zIndex: 100,
-                  padding: 18,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                  animation: "fadeInMain 0.3s"
-                }}>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 48,
+                    right: 0,
+                    background: lightTheme ? "#fff" : "#181c27",
+                    color: lightTheme ? "#23263a" : "#fff",
+                    border: `1.5px solid ${lightTheme ? '#9b0018' : '#fff'}`,
+                    borderRadius: 8,
+                    boxShadow: "0 4px 24px #000a",
+                    minWidth: 180,
+                    zIndex: 100,
+                    padding: 18,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                    animationName: userPanelFade ? "fadeOutMsg" : "fadeInMsg",
+                    animationDuration: "0.35s",
+                    animationFillMode: "forwards"
+                  }}
+                >
                   <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/></svg>
                     {loginUser || 'Invitado'}
@@ -562,9 +568,13 @@ useEffect(() => {
                     }}
                     onClick={() => {
                       setIsLoggedIn(false);
-                      setShowUserPanel(false);
-                      setLoginUser("");
-                      setLoginPass("");
+                      setUserPanelFade(true);
+                      setTimeout(() => {
+                        setShowUserPanel(false);
+                        setUserPanelFade(false);
+                        setLoginUser("");
+                        setLoginPass("");
+                      }, 350);
                     }}
                   >
                     Cerrar sesión
@@ -857,3 +867,12 @@ export default App;
 const spinnerStyle = document.createElement('style');
 spinnerStyle.innerHTML = `@keyframes spin-csv-btn { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`;
 document.head.appendChild(spinnerStyle);
+
+// Animación para el panel de usuario
+const userPanelAnimStyle = document.createElement('style');
+userPanelAnimStyle.innerHTML = `@keyframes showUserPanelAnim {
+  0% { opacity: 0; transform: translateY(-18px) scale(0.95); filter: blur(6px); }
+  60% { opacity: 1; transform: translateY(6px) scale(1.04); filter: blur(1.5px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}`;
+document.head.appendChild(userPanelAnimStyle);
