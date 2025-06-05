@@ -36,7 +36,7 @@ const myTheme = createTheme({
     { tag: t.number, color: '#5c6166' },
     { tag: t.bool, color: '#5c6166' },
     { tag: t.null, color: '#5c6166' },
-    { tag: t.keyword, color: '#9b0018' },
+    { tag: t.keyword, color: '#e74c3c' },
     { tag: t.operator, color: '#00aed5' },
     { tag: t.className, color: '#5c6166' },
     { tag: t.definition(t.typeName), color: '#5c6166' },
@@ -109,6 +109,13 @@ function App() {
   // Nuevo estado para animación de login
   const [loginFade, setLoginFade] = useState(false);
   const [mainFadeIn, setMainFadeIn] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [registerUser, setRegisterUser] = useState("");
+  const [registerPass, setRegisterPass] = useState("");
+  const [registerError, setRegisterError] = useState("");
+  const [registerSuccess, setRegisterSuccess] = useState("");
+  // Nuevo estado para animación de cambio
+  const [registerAnim, setRegisterAnim] = useState("");
 
 
 
@@ -236,7 +243,7 @@ function App() {
       }} />
       <div className={`login-bg${loginFade ? ' fade-out' : ''}`} style={{ minHeight: '100vh', position: 'fixed', inset: 0, zIndex: 10, display: isLoggedIn ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center', background: 'none' }}>
         <form
-          className="login-form"
+          className={`login-form${!showRegister ? ' login-fade-in' : ''}`}
           style={{
             background: '#181c27',
             border: '2px solid #9b0018',
@@ -244,10 +251,15 @@ function App() {
             boxShadow: '0 0 24px #000a',
             padding: 36,
             minWidth: 320,
-            display: 'flex',
+            display: showRegister ? 'none' : 'flex',
             flexDirection: 'column',
             gap: 18,
             color: '#fff',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 20
           }}
           onSubmit={e => {
             e.preventDefault();
@@ -266,7 +278,7 @@ function App() {
           }}
         >
           <h2 style={{ color: '#fff', marginBottom: 8, textAlign: 'center', letterSpacing: 1 }}>Iniciar sesión</h2>
-          <label style={{ color: '#ffe082' }}>Usuario</label>
+          <label style={{ color: '#fff' }}>Usuario</label>
           <input
             type="text"
             value={loginUser}
@@ -275,7 +287,7 @@ function App() {
             style={{ background: '#23263a', color: '#fff', border: '1.5px solid #9b0018', borderRadius: 5, padding: '10px 12px', fontSize: 16, marginBottom: 8 }}
             autoFocus
           />
-          <label style={{ color: '#ffe082' }}>Contraseña</label>
+          <label style={{ color: '#fff' }}>Contraseña</label>
           <input
             type="password"
             value={loginPass}
@@ -284,15 +296,122 @@ function App() {
             style={{ background: '#23263a', color: '#fff', border: '1.5px solid #9b0018', borderRadius: 5, padding: '10px 12px', fontSize: 16, marginBottom: 8 }}
           />
           {loginError && <div style={{ color: '#ff1744', background: '#4f1f1f', borderRadius: 5, padding: 8, marginBottom: 8, textAlign: 'center' }}>{loginError}</div>}
+          <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+            <button
+              type="submit"
+              style={{ flex: 1, background: '#9b0018', color: '#fff', border: 'none', borderRadius: 6, height: 40, fontSize: 17, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
+              onMouseOver={e => (e.currentTarget.style.background = '#680010')}
+              onMouseOut={e => (e.currentTarget.style.background = '#9b0018')}
+            >
+              Entrar
+            </button>
+            <button
+              type="button"
+              style={{ flex: 1, background: '#9b0018', color: '#fff', border: 'none', borderRadius: 6, height: 40, fontSize: 17, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
+              onClick={() => {
+                setIsLoggedIn(true);
+                setLoginError("");
+              }}
+              onMouseOver={e => (e.currentTarget.style.background = '#680010')}
+              onMouseOut={e => (e.currentTarget.style.background = '#9b0018')}
+            >
+            Invitado
+            </button>
+          </div>
           <button
-            type="submit"
-            style={{ background: '#9b0018', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 0', fontSize: 17, fontWeight: 600, cursor: 'pointer', marginTop: 8, transition: 'background 0.2s' }}
-            onMouseOver={e => (e.currentTarget.style.background = '#680010')}
-            onMouseOut={e => (e.currentTarget.style.background = '#9b0018')}
+            type="button"
+            style={{ background: 'none', color: '#75baff', border: 'none', marginTop: 8, cursor: 'pointer', textDecoration: 'underline', fontSize: 15 }}
+            onClick={() => {
+              setRegisterAnim("show-register");
+              setShowRegister(true);
+              setRegisterError("");
+              setRegisterSuccess("");
+            }}
           >
-            Entrar
+            Crear una cuenta
           </button>
         </form>
+        {/* Registro */}
+        {showRegister && (
+          <form
+            className={`login-form ${registerAnim}`}
+            style={{
+              background: '#181c27',
+              border: '2px solid #9b0018',
+              borderRadius: 10,
+              boxShadow: '0 0 24px #000',
+              padding: 36,
+              minWidth: 320,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 18,
+              color: '#fff',
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 20
+            }}
+            onAnimationEnd={() => {
+              if (registerAnim === "hide-register") {
+                setShowRegister(false);
+              }
+              setRegisterAnim("");
+            }}
+            onSubmit={e => {
+              e.preventDefault();
+              if (!registerUser.trim() || !registerPass.trim()) {
+                setRegisterError('Completa todos los campos');
+                setRegisterSuccess("");
+                return;
+              }
+              // Aquí iría la lógica real de registro (ejemplo local)
+              setRegisterSuccess('Cuenta creada correctamente. Ahora puedes iniciar sesión.');
+              setRegisterError("");
+              setRegisterUser("");
+              setRegisterPass("");
+              setTimeout(() => setShowRegister(false), 1500);
+            }}
+          >
+            <h2 style={{ color: '#fff', marginBottom: 8, textAlign: 'center', letterSpacing: 1 }}>Crear cuenta</h2>
+            <label style={{ color: '#fff' }}>Usuario</label>
+            <input
+              type="text"
+              value={registerUser}
+              onChange={e => setRegisterUser(e.target.value)}
+              placeholder="Usuario nuevo"
+              style={{ background: '#23263a', color: '#fff', border: '1.5px solid #9b0018', borderRadius: 5, padding: '10px 12px', fontSize: 16, marginBottom: 8 }}
+              autoFocus
+            />
+            <label style={{ color: '#fff' }}>Contraseña</label>
+            <input
+              type="password"
+              value={registerPass}
+              onChange={e => setRegisterPass(e.target.value)}
+              placeholder="Contraseña nueva"
+              style={{ background: '#23263a', color: '#fff', border: '1.5px solid #9b0018', borderRadius: 5, padding: '10px 12px', fontSize: 16, marginBottom: 8 }}
+            />
+            {registerError && <div style={{ color: '#ff1744', background: '#4f1f1f', borderRadius: 5, padding: 8, marginBottom: 8, textAlign: 'center' }}>{registerError}</div>}
+            {registerSuccess && <div style={{ color: '#00e676', background: '#1f4f2f', borderRadius: 5, padding: 8, marginBottom: 8, textAlign: 'center' }}>{registerSuccess}</div>}
+            <button
+              type="submit"
+              style={{ background: '#9b0018', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 0', fontSize: 17, fontWeight: 600, cursor: 'pointer', marginTop: 8, transition: 'background 0.2s' }}
+              onMouseOver={e => (e.currentTarget.style.background = '#680010')}
+              onMouseOut={e => (e.currentTarget.style.background = '#9b0018')}
+            >
+              Crear cuenta
+            </button>
+            <button
+              type="button"
+              style={{ background: 'none', color: '#75baff', border: 'none', marginTop: 8, cursor: 'pointer', textDecoration: 'underline', fontSize: 15 }}
+              onClick={() => {
+                setRegisterAnim("hide-register");
+              }}
+            >
+              Cancelar
+            </button>
+          </form>
+        )}
       </div>
       <div className={`app-container${loginFade || !isLoggedIn ? '' : ' main-fade-in'}${isHistoryOpen ? ' history-open' : ''}`}
         style={{
