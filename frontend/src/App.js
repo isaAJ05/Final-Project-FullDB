@@ -14,6 +14,7 @@ import { lineNumbers, highlightActiveLine } from "@codemirror/view";
 import { createTheme } from '@uiw/codemirror-themes';
 
 import { tags as t } from '@lezer/highlight';
+import TooltipPortal from "./TooltipPortal";
 
 const myTheme = createTheme({
   theme: 'light',
@@ -137,6 +138,8 @@ function App() {
   const [selectedTable, setSelectedTable] = useState(null);
   const [mainContentAnim, setMainContentAnim] = useState("");
   const [user, setUser] = useState(null);
+  // Estado global para tooltip de columna
+  const [colTooltip, setColTooltip] = useState({ visible: false, x: 0, y: 0, text: "" });
 
   const prevHistoryOpen = useRef(isHistoryOpen);
 
@@ -523,7 +526,7 @@ useEffect(() => {
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {
-                  setRegisterSuccess('Cuenta creada correctamente. Ahora puedes iniciar sesión.');
+                  setRegisterSuccess('Cuenta creada');
                   setRegisterError("");
                   setRegisterUser("");
                   setRegisterPass("");
@@ -840,9 +843,32 @@ useEffect(() => {
                               {selectedTable === table && selectedDb === db && selectedTableColumns.length > 0 && (
                                 <ul style={{ margin: "4px 0 4px 24px", padding: 0, color: "#bfc7d5", fontSize: "0.97em" }}>
                                   {selectedTableColumns.map(col => (
-                                    <li key={col.name} style={{ listStyle: "disc", marginLeft: 12 }}>
-                                      <span style={{ color: "#fff" }}>{col.name}</span>
-                                      <span style={{ color: "#9b0018", marginLeft: 6, fontSize: "0.95em" }}>{col.type}</span>
+                                    <li key={col.name} style={{ listStyle: "disc", marginLeft: 12, position: 'relative' }}>
+                                      <span
+                                        className="sidebar-col-tooltip custom-tooltip-trigger"
+                                        tabIndex={0}
+                                        onMouseMove={e => {
+                                          setColTooltip({
+                                            visible: true,
+                                            x: e.clientX + 14,
+                                            y: e.clientY + 8,
+                                            text: col.type
+                                          });
+                                        }}
+                                        onMouseLeave={() => setColTooltip(t => ({ ...t, visible: false }))}
+                                        onFocus={e => {
+                                          const rect = e.currentTarget.getBoundingClientRect();
+                                          setColTooltip({
+                                            visible: true,
+                                            x: rect.right + 14,
+                                            y: rect.top + rect.height / 2,
+                                            text: col.type
+                                          });
+                                        }}
+                                        onBlur={() => setColTooltip(t => ({ ...t, visible: false }))}
+                                      >
+                                        {col.name}
+                                      </span>
                                     </li>
                                   ))}
                                 </ul>
@@ -1008,6 +1034,10 @@ useEffect(() => {
           </div>
         </div>
       </div>
+      {/* Portal para tooltip de columna */}
+      <TooltipPortal visible={colTooltip.visible} x={colTooltip.x} y={colTooltip.y}>
+        {colTooltip.text}
+      </TooltipPortal>
     </>
   );
 }

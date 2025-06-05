@@ -316,6 +316,12 @@
   padding: 10px;
   border: 1px solid #2e8b57;
   border-radius: 6px;
+  margin-bottom: 8px;
+  word-break: break-word;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 24px;
+  transition: min-height 0.3s cubic-bezier(0.4,0,0.2,1);
 }
 
 .message-error {
@@ -324,6 +330,12 @@
   padding: 10px;
   border: 1px solid #8b2e2e;
   border-radius: 6px;
+  margin-bottom: 8px;
+  word-break: break-word;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 24px;
+  transition: min-height 0.3s cubic-bezier(0.4,0,0.2,1);
 }
 
 .main-content {
@@ -595,7 +607,7 @@
   }
 }
 .login-form.show-register {
-  animation: slideInRegister 0.5s cubic-bezier(0.4,0,0.2,1);
+  animation: slideInRegister 1s cubic-bezier(0.4,0,0.2,1);
 }
 
 /* Animación de salida para el registro */
@@ -818,4 +830,59 @@ body.light-theme, .app-container.light-theme {
     transform: translateX(-100%);
     opacity: 0.7;
   }
+}
+
+/* Tooltip para columnas del sidebar */
+.sidebar-col-tooltip {
+  color: #fff;
+  cursor: default;
+  border-bottom: 1px dotted #9b0018;
+  position: relative;
+  transition: color 0.2s;
+}
+.sidebar-col-tooltip:hover {
+  color: #9b0018;
+}
+
+/* Personaliza el tooltip nativo (solo para navegadores modernos) */
+.sidebar-col-tooltip::-webkit-tooltip {
+  background: #181c27;
+  color: #b6f2c5;
+  border-radius: 6px;
+  border: 1px solid #9b0018;
+  padding: 8px 12px;
+  font-size: 1em;
+  box-shadow: 0 2px 8px #000a;
+}
+
+/* Tooltip personalizado para columnas del sidebar */
+.custom-tooltip-trigger {
+  position: relative;
+  outline: none;
+}
+.custom-tooltip {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  background: #181c27;
+  color: #fff;
+  border-radius: 6px;
+  border: 1.5px solid #9b0018;
+  padding: 4px 10px;
+  font-size: 0.92em;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: 0 4px 16px #000a;
+  white-space: nowrap;
+  z-index: 99999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s cubic-bezier(0.4,0,0.2,1), transform 0.18s cubic-bezier(0.4,0,0.2,1);
+  pointer-events: none;
+}
+.custom-tooltip-trigger:hover .custom-tooltip,
+.custom-tooltip-trigger:focus .custom-tooltip {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
 }
