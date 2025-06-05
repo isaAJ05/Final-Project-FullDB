@@ -772,18 +772,21 @@ def upload_csv():
 
     table_path = os.path.join(db_path, f"{table}.json")
     if os.path.exists(table_path):
-        table_data = load_table(db, table)  # <-- aquí debe ir db, table
+        table_data = load_table(db, table)
     else:
-        # Si la tabla no existe, crea una nueva con columnas del CSV
+        # Si la tabla no existe, crea una nueva con columnas del CSV (tipo VARCHAR por defecto)
         reader = csv.DictReader(StringIO(file.read().decode('utf-8')))
         columns = reader.fieldnames
-        table_data = {"columns": columns, "rows": []}
+        table_data = {
+            "columns": [{"name": col, "type": "VARCHAR(255)"} for col in columns],
+            "rows": []
+        }
         file.seek(0)  # Regresa el puntero para volver a leer
 
     reader = csv.DictReader(StringIO(file.read().decode('utf-8')))
     count = 0
     for row in reader:
-        filtered_row = {col: row[col] for col in table_data["columns"] if col in row}
+        filtered_row = {col["name"]: row[col["name"]] for col in table_data["columns"] if col["name"] in row}
         table_data["rows"].append(filtered_row)
         count += 1
     save_table(db, table, table_data)

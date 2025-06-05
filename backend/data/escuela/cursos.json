@@ -1,1 +1,0 @@
-{"columns": [{"name": "nombre", "type": "VARCHAR(100)"}, {"name": "profesor", "type": "VARCHAR(100)"}], "rows": [{"nombre": "Calculo", "profesor": "Dr. Garcia"}, {"nombre": "Fisica", "profesor": "Ing. Perez"}, {"nombre": "Quimica", "profesor": "Dra. Martinez"}]}
