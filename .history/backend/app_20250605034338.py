@@ -16,8 +16,6 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import pathlib
-from google.oauth2 import id_token
-from google.auth.transport import requests as grequests
 # ==========================
 # CONSTANTES Y APP FLASK
 # ==========================
@@ -630,27 +628,6 @@ def upload_to_drive():
 
     os.remove(filepath)
     return jsonify({"message": "Archivo subido a Drive", "file_id": uploaded_file.get("id")})
-
-@app.route("/google-login", methods=["POST"])
-def google_login():
-    token = request.json.get("credential")
-    try:
-        idinfo = id_token.verify_oauth2_token(token, grequests.Request(), "154709914760-lj5hq85pps2fumarjoofeed8kptdm4gp.apps.googleusercontent.com")
-
-        # Aquí puedes crear el usuario en tu base de datos si no existe
-        user_email = idinfo["email"]
-        user_name = idinfo.get("name", "")
-
-        return jsonify({
-            "success": True,
-            "user": {
-                "email": user_email,
-                "name": user_name
-            }
-        })
-
-    except ValueError:
-        return jsonify({"success": False, "message": "Token inválido"}), 400
 
 @app.route('/backups', methods=['GET'])
 def list_backups():

@@ -136,58 +136,45 @@ function App() {
   const [selectedTableColumns, setSelectedTableColumns] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
 
-  const handleLogin = (userData) => {
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-  };
 
-  // Luego en el inicio de la app, cargas el usuario:
-  React.useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+
+function GoogleLoginButton({ onLogin }) {
+  const divRef = useRef(null);
+
+  useEffect(() => {
+    if (window.google && divRef.current) {
+      window.google.accounts.id.initialize({
+        client_id: 'TU_CLIENT_ID_DE_GOOGLE.apps.googleusercontent.com',
+        callback: handleCredentialResponse,
+      });
+
+      window.google.accounts.id.renderButton(divRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: '100%',
+      });
     }
   }, []);
 
-  
-
-    function GoogleLoginButton({ onLogin }) {
-      const divRef = useRef(null);
-
-      useEffect(() => {
-        if (window.google && divRef.current) {
-          window.google.accounts.id.initialize({
-            client_id: '154709914760-lj5hq85pps2fumarjoofeed8kptdm4gp.apps.googleusercontent.com',
-            callback: handleCredentialResponse,
-          });
-
-          window.google.accounts.id.renderButton(divRef.current, {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-          });
+  const handleCredentialResponse = (response) => {
+    // Enviar el token al backend
+    fetch('http://localhost:5000/google-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          onLogin(data.user);
+        } else {
+          alert("Error de login con Google");
         }
-      }, []);
+      });
+  };
 
-      const handleCredentialResponse = (response) => {
-        // Enviar el token al backend
-        fetch('http://localhost:5000/google-login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ credential: response.credential }),
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              onLogin(data.user);
-            } else {
-              alert("Error de login con Google");
-            }
-          });
-      };
-
-      return <div ref={divRef}></div>;
-    }
+  return <div ref={divRef}></div>;
+}
 
 
 // Función para cargar columnas de una tabla
@@ -447,12 +434,7 @@ useEffect(() => {
             }}
           >
             Crear una cuenta
-            </button>
-                <GoogleLoginButton onLogin={(user) => {
-        setIsLoggedIn(true);
-        console.log("Usuario logueado con Google:", user);
-      }} />
-
+          </button>
         </form>
         {/* Registro */}
         {showRegister && (

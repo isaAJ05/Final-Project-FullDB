@@ -137,17 +137,17 @@ function App() {
   const [selectedTable, setSelectedTable] = useState(null);
 
   const handleLogin = (userData) => {
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-  };
+  setUser(userData);
+  localStorage.setItem("user", JSON.stringify(userData));
+};
 
-  // Luego en el inicio de la app, cargas el usuario:
-  React.useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
+// Luego en el inicio de la app, cargas el usuario:
+React.useEffect(() => {
+  const savedUser = localStorage.getItem("user");
+  if (savedUser) {
+    setUser(JSON.parse(savedUser));
+  }
+}, []);
 
   
 

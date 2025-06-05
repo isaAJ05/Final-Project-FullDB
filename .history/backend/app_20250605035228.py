@@ -16,8 +16,6 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import pathlib
-from google.oauth2 import id_token
-from google.auth.transport import requests as grequests
 # ==========================
 # CONSTANTES Y APP FLASK
 # ==========================
@@ -635,7 +633,7 @@ def upload_to_drive():
 def google_login():
     token = request.json.get("credential")
     try:
-        idinfo = id_token.verify_oauth2_token(token, grequests.Request(), "154709914760-lj5hq85pps2fumarjoofeed8kptdm4gp.apps.googleusercontent.com")
+        idinfo = id_token.verify_oauth2_token(token, grequests.Request(), "TU_CLIENT_ID_DE_GOOGLE.apps.googleusercontent.com")
 
         # Aquí puedes crear el usuario en tu base de datos si no existe
         user_email = idinfo["email"]

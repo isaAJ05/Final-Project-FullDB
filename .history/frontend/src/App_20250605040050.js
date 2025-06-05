@@ -135,21 +135,7 @@ function App() {
   // Para cargar columnas de una tabla
   const [selectedTableColumns, setSelectedTableColumns] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
-
-  const handleLogin = (userData) => {
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-  };
-
-  // Luego en el inicio de la app, cargas el usuario:
-  React.useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
-
-  
+  const clientIdok = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
     function GoogleLoginButton({ onLogin }) {
       const divRef = useRef(null);
@@ -157,7 +143,7 @@ function App() {
       useEffect(() => {
         if (window.google && divRef.current) {
           window.google.accounts.id.initialize({
-            client_id: '154709914760-lj5hq85pps2fumarjoofeed8kptdm4gp.apps.googleusercontent.com',
+            client_id: {clientIdok},
             callback: handleCredentialResponse,
           });
 

@@ -1,7 +1,7 @@
 # ==========================
 # IMPORTACIONES Y CONFIGURACIÓN
 # ==========================
-from flask import Flask, request, redirect, session, jsonify
+from flask import Flask, request, jsonify
 import sqlglot
 import json
 import os
@@ -12,24 +12,19 @@ import datetime
 import shutil
 from flask_cors import CORS
 import unicodedata
+from flask import Flask, request, redirect, session, jsonify
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+import os
 import pathlib
-from google.oauth2 import id_token
-from google.auth.transport import requests as grequests
 # ==========================
 # CONSTANTES Y APP FLASK
 # ==========================
 app = Flask(__name__)
 CORS(app)
 DATA_DIR = "data"
-app.secret_key = "una_clave_secreta_segura"
 
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-
-CLIENT_SECRETS_FILE = "credentials.json"
-SCOPES = ["https://www.googleapis.com/auth/drive.file"]
 # ==========================
 # FUNCIONES UTILITARIAS
 # ==========================
@@ -570,87 +565,6 @@ def execute_sql():
 # ==========================
 # ENDPOINTS DE ADMINISTRACIÓN
 # ==========================
-
-@app.route("/login")
-def login():
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        redirect_uri="http://localhost:5000/oauth2callback"
-    )
-    auth_url, _ = flow.authorization_url(prompt="consent")
-    return redirect(auth_url)
-
-@app.route("/oauth2callback")
-def oauth2callback():
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        redirect_uri="http://localhost:5000/oauth2callback"
-    )
-    flow.fetch_token(authorization_response=request.url)
-
-    credentials = flow.credentials
-    session["credentials"] = {
-        "token": credentials.token,
-        "refresh_token": credentials.refresh_token,
-        "token_uri": credentials.token_uri,
-        "client_id": credentials.client_id,
-        "client_secret": credentials.client_secret,
-        "scopes": credentials.scopes,
-    }
-    return redirect("/upload_to_drive")
-
-@app.route("/upload_to_drive", methods=["GET", "POST"])
-def upload_to_drive():
-    if "credentials" not in session:
-        return redirect("/login")
-
-    if request.method == "GET":
-        return '''
-        <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="file"><br>
-            <input type="submit" value="Subir a Drive">
-        </form>
-        '''
-
-    credentials = session["credentials"]
-    file = request.files["file"]
-    filepath = f"temp_{file.filename}"
-    file.save(filepath)
-
-    from google.oauth2.credentials import Credentials
-    creds = Credentials(**credentials)
-
-    service = build("drive", "v3", credentials=creds)
-
-    file_metadata = {"name": file.filename}
-    media = MediaFileUpload(filepath, resumable=True)
-    uploaded_file = service.files().create(body=file_metadata, media_body=media, fields="id").execute()
-
-    os.remove(filepath)
-    return jsonify({"message": "Archivo subido a Drive", "file_id": uploaded_file.get("id")})
-
-@app.route("/google-login", methods=["POST"])
-def google_login():
-    token = request.json.get("credential")
-    try:
-        idinfo = id_token.verify_oauth2_token(token, grequests.Request(), "154709914760-lj5hq85pps2fumarjoofeed8kptdm4gp.apps.googleusercontent.com")
-
-        # Aquí puedes crear el usuario en tu base de datos si no existe
-        user_email = idinfo["email"]
-        user_name = idinfo.get("name", "")
-
-        return jsonify({
-            "success": True,
-            "user": {
-                "email": user_email,
-                "name": user_name
-            }
-        })
-
-    except ValueError:
-        return jsonify({"success": False, "message": "Token inválido"}), 400
 
 @app.route('/backups', methods=['GET'])
 def list_backups():
