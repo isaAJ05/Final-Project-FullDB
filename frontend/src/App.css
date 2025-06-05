@@ -238,7 +238,7 @@
 
 /* Panel de errores */
 .errors-panel {
-  height: 120px;
+  height: 100px;
   flex: none; 
   padding: 15px;
   box-sizing: border-box;
