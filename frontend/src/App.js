@@ -102,6 +102,8 @@ function App() {
   const [newDb, setNewDb] = useState("");
   const [tableName, setTableName] = useState("");
   const [csvFile, setCsvFile] = useState(null);
+  // Estado para animación de carga en el botón de subir archivo CSV
+  const [uploadingCsv, setUploadingCsv] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginUser, setLoginUser] = useState("");
   const [loginPass, setLoginPass] = useState("");
@@ -116,7 +118,12 @@ function App() {
   const [registerSuccess, setRegisterSuccess] = useState("");
   // Nuevo estado para animación de cambio
   const [registerAnim, setRegisterAnim] = useState("");
-
+  const [uploadBtnLoading, setUploadBtnLoading] = useState(false); // Estado para el botón de carga
+  // Estado para animación de aparición del modal de subir CSV
+  const [uploadAnim, setUploadAnim] = useState("");
+  // Mensajes temporales en el output con desvanecido
+  const [fadeError, setFadeError] = useState(false);
+  const [fadeSuccess, setFadeSuccess] = useState(false);
 
 
   // Obtener bases de datos al montar
@@ -227,6 +234,25 @@ function App() {
       window.removeEventListener("mouseup", stopDragging);
     };
   }, [isDragging]);
+
+  // Mensajes temporales en el output
+useEffect(() => {
+  if (error) {
+    setFadeError(false);
+    const fadeTimer = setTimeout(() => setFadeError(true), 7500);
+    const clearTimer = setTimeout(() => setError(''), 8000);
+    return () => { clearTimeout(fadeTimer); clearTimeout(clearTimer); };
+  }
+}, [error]);
+
+useEffect(() => {
+  if (result && result.message) {
+    setFadeSuccess(false);
+    const fadeTimer = setTimeout(() => setFadeSuccess(true), 7500);
+    const clearTimer = setTimeout(() => setResult(null), 8000);
+    return () => { clearTimeout(fadeTimer); clearTimeout(clearTimer); };
+  }
+}, [result]);
 
   // Login visual simple
   return (
@@ -577,7 +603,10 @@ function App() {
                 <label  
                   className="upload-btn"
                   style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
-                  onClick={() => setShowUpload(true)}
+                  onClick={() => {
+                    setShowUpload(true);
+                    setUploadAnim("fade-in-up");
+                  }}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4" /></svg>
 
@@ -586,7 +615,9 @@ function App() {
                 
                 {showUpload && (
                   <div className="modal-bg">
-                    <div className="modal">
+                    <div className={`modal modal-appear${uploadAnim ? " " + uploadAnim : ""}`}
+      onAnimationEnd={() => setUploadAnim("")}
+                    >
                       <h3>Subir CSV</h3>
                       <div>
                         <label>Base de datos existente:</label>
@@ -609,9 +640,27 @@ function App() {
                           <button
                             type="button"
                             className="upload-btn"
-                            style={{ minWidth: 120 }}
-                            onClick={() => document.getElementById('modal-upload-csv').click()}
+                            style={{ minWidth: 120, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                            onClick={() => {
+                              setUploadingCsv(true);
+                              document.getElementById('modal-upload-csv').click();
+                              // Si no se selecciona archivo, ocultar spinner tras 1s
+                              setTimeout(() => setUploadingCsv(false), 1000);
+                            }}
+                            disabled={uploadingCsv}
                           >
+                            {uploadingCsv && (
+                              <span style={{
+                                display: 'inline-block',
+                                width: 18,
+                                height: 18,
+                                border: '2.5px solid #fff',
+                                borderTop: '2.5px solid #9b0018',
+                                borderRadius: '50%',
+                                animation: 'spin-csv-btn 0.7s linear infinite',
+                                marginRight: 4
+                              }} />
+                            )}
                             Seleccionar archivo
                           </button>
                           <span style={{ color: '#bfc7d5', fontSize: '0.98em', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'inline-block' }}>
@@ -622,7 +671,10 @@ function App() {
                             id="modal-upload-csv"
                             accept=".csv"
                             style={{ display: 'none' }}
-                            onChange={e => setCsvFile(e.target.files[0])}
+                            onChange={e => {
+                              setCsvFile(e.target.files[0]);
+                              setUploadingCsv(false);
+                            }}
                           />
                         </div>
                       </div>
@@ -660,20 +712,20 @@ function App() {
                     </tbody>
                   </table>
                 ) : result && result.message ? (
-                  "Tablas"
+                  null
                 ) : result ? (
                   <pre>{JSON.stringify(result, null, 2)}</pre>
                 ) : (
-                  "Tablas"
+                  null
                 )}
               </div>
 
               <div className="errors-panel">
                 {error ? (
-                  <div className="message-error">{error}</div>
+                  <div className={`message-error${fadeError ? ' fade-out-msg' : ''} fade-in-msg`}>{error}</div>
                 ) : (result && result.message ? (
-                  <div className="message-success">{result.message}</div>
-                ) : "Output")}
+                  <div className={`message-success${fadeSuccess ? ' fade-out-msg' : ''} fade-in-msg`}>{result.message}</div>
+                ) : null)}
               </div>
             </div>
           </div>
@@ -684,3 +736,9 @@ function App() {
 }
 
 export default App;
+
+// Animación spinner para el botón de subir CSV
+// Puedes poner esto en App.css si prefieres
+const spinnerStyle = document.createElement('style');
+spinnerStyle.innerHTML = `@keyframes spin-csv-btn { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`;
+document.head.appendChild(spinnerStyle);
