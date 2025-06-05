@@ -776,7 +776,6 @@ useEffect(() => {
             className="history-btn"
             style={{
               fontWeight: "bold",
-              background: isDbListOpen ? "#22263a" : undefined,
               display: "flex",
               alignItems: "center",
               gap: 8,
@@ -803,7 +802,6 @@ useEffect(() => {
                     className="history-btn"
                     style={{
                       fontWeight: expandedDb === db ? "bold" : "normal",
-                      background: expandedDb === db ? "#23263a" : undefined,
                       display: "flex",
                       alignItems: "center",
                       gap: 6
@@ -827,7 +825,6 @@ useEffect(() => {
                                 className="history-btn"
                                 style={{
                                   fontSize: "0.95em",
-                                  background: "#23263a",
                                   margin: "3px 0",
                                   display: "flex",
                                   alignItems: "center",

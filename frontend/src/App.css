@@ -162,7 +162,7 @@
   background-color: #0f131c;
   color: #ffffff;
   font-family: 'Segoe UI', sans-serif;
-  font-size: 20px;
+  font-size: 17px;
   border: 1px solid #9b0018;
   
   border-radius: 8px;
@@ -885,4 +885,39 @@ body.light-theme, .app-container.light-theme {
   display: block;
   opacity: 1;
   pointer-events: auto;
+}
+
+.light-theme .history-btn {
+  background-color: #9b0018 !important;
+  color: #fff;
+}
+.light-theme .history-btn:hover {
+  background-color: #680010 !important;
+  color: #fff;
+}
+.light-theme .history-btn.active,
+.light-theme .history-btn[aria-expanded="true"],
+.light-theme .history-btn.selected {
+  background-color: #f3f3f6 !important;
+  color: #b8001e !important;
+}
+.light-theme .history-btn.open,
+.light-theme .history-btn.open:active,
+.light-theme .history-btn.open:hover,
+.light-theme .history-btn.open:focus {
+  background-color: #f3f3f6 !important;
+  color: #b8001e !important;
+}
+/* Refuerza para todos los estados combinados en tema claro */
+.light-theme .history-btn.active:active,
+.light-theme .history-btn.active:hover,
+.light-theme .history-btn.active:focus,
+.light-theme .history-btn.selected:active,
+.light-theme .history-btn.selected:hover,
+.light-theme .history-btn.selected:focus,
+.light-theme .history-btn[aria-expanded="true"]:active,
+.light-theme .history-btn[aria-expanded="true"]:hover,
+.light-theme .history-btn[aria-expanded="true"]:focus {
+  background-color: #f3f3f6 !important;
+  color: #b8001e !important;
 }
