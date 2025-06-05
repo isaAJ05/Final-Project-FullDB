@@ -11,7 +11,6 @@ from io import StringIO
 import datetime
 import shutil
 from flask_cors import CORS
-import unicodedata
 
 # ==========================
 # CONSTANTES Y APP FLASK
@@ -54,20 +53,11 @@ def parse_db_table(full_name):
         return parts[0], parts[1]
     return None, parts[0]
 
-def normalizar(texto):
-    if texto is None:
-        return ""
-    # Quita acentos, pasa a minúsculas y elimina espacios extra
-    texto = str(texto).strip().lower()
-    texto = ''.join(c for c in unicodedata.normalize('NFD', texto)
-                    if unicodedata.category(c) != 'Mn')
-    return texto
-
 def join_tables(left_rows, right_rows, left_key, right_key):
     result = []
     for l in left_rows:
         for r in right_rows:
-            if normalizar(l.get(left_key)) == normalizar(r.get(right_key)):
+            if str(l.get(left_key)) == str(r.get(right_key)):
                 combined = {**l, **r}
                 result.append(combined)
     return result
@@ -101,7 +91,6 @@ query_cache = {}
 def parser(query):
     """Etapa 1: Parser - Analiza y valida la sintaxis SQL."""
     parsed = sqlglot.parse(query)
-    print(parsed[0].dump())
     if not parsed or len(parsed) == 0:
         raise ValueError("Consulta SQL vacía o inválida")
     return parsed[0]
@@ -199,45 +188,26 @@ def executor(plan, stmt_type, query, data, stmt_info):
                             agg_value = None
                         result_row[alias] = agg_value
                     result.append(result_row)
-                    # Inferir columnas a partir de las keys del primer row
-                columns = list(result[0].keys()) if result else []
+                return {"source": "executed", "rows": result}
 
-                return {
-                    "source": "executed",
-                    "columns": columns,
-                    "rows": result
-                }
-
-
-            else:
-                # Si no hay GROUP BY, solo selecciona columnas del JOIN
-                result = []
-                for row in joined:
-                    result_row = {}
-                    for col in stmt_info["columns"]:
-                        if "." in col:
-                            _, real_col = col.split(".", 1)
-                        else:
-                            real_col = col
-                        result_row[col] = row.get(real_col)
-                    for agg in stmt_info["aggregates"]:
-                        alias = agg["alias"] or f"{agg['func'].lower()}_{agg['col']}"
-                        if agg["func"] == "SUM":
-                            result_row[alias] = float(row.get(agg["col"], 0))
-                        elif agg["func"] == "COUNT":
-                            result_row[alias] = 1
-                    result.append(result_row)
-
-                # Aquí infieres las columnas
-                columns = list(result[0].keys()) if result else []
-
-                # Y las devuelves
-                return {
-                    "source": "executed",
-                    "columns": columns,
-                    "rows": result
-                }
-
+            # Si no hay GROUP BY, solo selecciona columnas del JOIN
+            result = []
+            for row in joined:
+                result_row = {}
+                for col in stmt_info["columns"]:
+                    if "." in col:
+                        _, real_col = col.split(".", 1)
+                    else:
+                        real_col = col
+                    result_row[col] = row.get(real_col)
+                for agg in stmt_info["aggregates"]:
+                    alias = agg["alias"] or f"{agg['func'].lower()}_{agg['col']}"
+                    if agg["func"] == "SUM":
+                        result_row[alias] = float(row.get(agg["col"], 0))
+                    elif agg["func"] == "COUNT":
+                        result_row[alias] = 1
+                result.append(result_row)
+            return {"source": "executed", "rows": result}
 
         # SELECT simple (sin JOIN ni GROUP BY)
         if stmt_info["tables"]:
@@ -404,9 +374,10 @@ def executor(plan, stmt_type, query, data, stmt_info):
         if not table_data:
             raise ValueError(f'Tabla {table} no existe en base {db}')
         # Validar columnas
-        table_columns = [col['name'] for col in table_data["columns"]]
         print(f"columns: {columns}")
         print(f"table_columns: {table_columns}")
+
+        table_columns = [col['name'] for col in table_data["columns"]]
         if set(columns) != set(table_columns):
             raise ValueError('Debes insertar todas las columnas de la tabla y en el mismo orden')
         # Validar tipos

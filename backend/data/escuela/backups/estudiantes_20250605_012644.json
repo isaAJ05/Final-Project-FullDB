@@ -1,0 +1,1 @@
+{"columns": [{"name": "id", "type": "INT"}, {"name": "nombre", "type": "VARCHAR(100)"}, {"name": "edad", "type": "INT"}, {"name": "curso", "type": "VARCHAR(50)"}], "rows": [{"id": "1", "nombre": "Ana L\u00f3pez", "edad": "18", "curso": "C\u00e1lculo"}, {"id": "2", "nombre": "Luz Peres", "edad": "22", "curso": "Lenguas"}]}

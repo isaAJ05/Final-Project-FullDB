@@ -101,7 +101,6 @@ query_cache = {}
 def parser(query):
     """Etapa 1: Parser - Analiza y valida la sintaxis SQL."""
     parsed = sqlglot.parse(query)
-    print(parsed[0].dump())
     if not parsed or len(parsed) == 0:
         raise ValueError("Consulta SQL vacía o inválida")
     return parsed[0]
@@ -228,10 +227,10 @@ def executor(plan, stmt_type, query, data, stmt_info):
                             result_row[alias] = 1
                     result.append(result_row)
 
-                # Aquí infieres las columnas
+                # ✅ Aquí infieres las columnas
                 columns = list(result[0].keys()) if result else []
 
-                # Y las devuelves
+                # ✅ Y las devuelves
                 return {
                     "source": "executed",
                     "columns": columns,

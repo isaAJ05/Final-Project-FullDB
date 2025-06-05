@@ -1,0 +1,12 @@
+{
+    "columns": [
+      {"name": "nombre", "type": "VARCHAR(100)"},
+      {"name": "profesor", "type": "VARCHAR(100)"}
+    ],
+    "rows": [
+      {"nombre": "Calculo", "profesor": "Dr. García"},
+      {"nombre": "Fisica", "profesor": "Ing. Pérez"},
+      {"nombre": "Química", "profesor": "Dra. Martínez"}
+    ]
+  }
+  

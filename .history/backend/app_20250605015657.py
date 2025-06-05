@@ -101,7 +101,6 @@ query_cache = {}
 def parser(query):
     """Etapa 1: Parser - Analiza y valida la sintaxis SQL."""
     parsed = sqlglot.parse(query)
-    print(parsed[0].dump())
     if not parsed or len(parsed) == 0:
         raise ValueError("Consulta SQL vacía o inválida")
     return parsed[0]
@@ -200,44 +199,41 @@ def executor(plan, stmt_type, query, data, stmt_info):
                         result_row[alias] = agg_value
                     result.append(result_row)
                     # Inferir columnas a partir de las keys del primer row
-                columns = list(result[0].keys()) if result else []
+            # Inferir columnas a partir de las keys del primer row
+            columns = list(result[0].keys()) if result else []
 
-                return {
-                    "source": "executed",
-                    "columns": columns,
-                    "rows": result
-                }
+            return {
+                "source": "executed",
+                "columns": columns,
+                "rows": result
+            }
 
 
-            else:
-                # Si no hay GROUP BY, solo selecciona columnas del JOIN
-                result = []
-                for row in joined:
-                    result_row = {}
-                    for col in stmt_info["columns"]:
-                        if "." in col:
-                            _, real_col = col.split(".", 1)
-                        else:
-                            real_col = col
-                        result_row[col] = row.get(real_col)
-                    for agg in stmt_info["aggregates"]:
-                        alias = agg["alias"] or f"{agg['func'].lower()}_{agg['col']}"
-                        if agg["func"] == "SUM":
-                            result_row[alias] = float(row.get(agg["col"], 0))
-                        elif agg["func"] == "COUNT":
-                            result_row[alias] = 1
-                    result.append(result_row)
 
-                # Aquí infieres las columnas
-                columns = list(result[0].keys()) if result else []
+            # Si no hay GROUP BY, solo selecciona columnas del JOIN
+            result = []
+            for row in joined:
+                result_row = {}
+                for col in stmt_info["columns"]:
+                    if "." in col:
+                        _, real_col = col.split(".", 1)
+                    else:
+                        real_col = col
+                    result_row[col] = row.get(real_col)
+                for agg in stmt_info["aggregates"]:
+                    alias = agg["alias"] or f"{agg['func'].lower()}_{agg['col']}"
+                    if agg["func"] == "SUM":
+                        result_row[alias] = float(row.get(agg["col"], 0))
+                    elif agg["func"] == "COUNT":
+                        result_row[alias] = 1
+                result.append(result_row)
+            columns = list(result[0].keys()) if result else []
 
-                # Y las devuelves
-                return {
-                    "source": "executed",
-                    "columns": columns,
-                    "rows": result
-                }
-
+            return {
+                "source": "executed",
+                "columns": columns,
+                "rows": result
+            }
 
         # SELECT simple (sin JOIN ni GROUP BY)
         if stmt_info["tables"]:

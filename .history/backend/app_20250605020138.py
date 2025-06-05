@@ -101,7 +101,6 @@ query_cache = {}
 def parser(query):
     """Etapa 1: Parser - Analiza y valida la sintaxis SQL."""
     parsed = sqlglot.parse(query)
-    print(parsed[0].dump())
     if not parsed or len(parsed) == 0:
         raise ValueError("Consulta SQL vacía o inválida")
     return parsed[0]
