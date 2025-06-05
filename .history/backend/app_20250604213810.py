@@ -216,14 +216,14 @@ def executor(plan, stmt_type, query, data, stmt_info):
             if not table_data:
                 raise ValueError(f'Tabla {table} no existe en base {db}')
             if stmt_info["columns"] == ["*"]:
-                # Devuelve todas las columnas
-                result = [row for row in table_data["rows"]]
-                column_names = [col['name'] for col in table_data["columns"]]
-            else:
-                result = [{col: row.get(col) for col in stmt_info["columns"]} for row in table_data["rows"]]
-                column_names = stmt_info["columns"]
-            query_cache[query] = {"columns": column_names, "rows": result}
-            return {"source": "executed", "columns": column_names, "rows": result}
+    # Devuelve todas las columnas
+    result = [row for row in table_data["rows"]]
+    column_names = [col['name'] for col in table_data["columns"]]
+else:
+    result = [{col: row.get(col) for col in stmt_info["columns"]} for row in table_data["rows"]]
+    column_names = stmt_info["columns"]
+query_cache[query] = {"columns": column_names, "rows": result}
+return {"source": "executed", "columns": column_names, "rows": result}
     
     # CREATE DATABASE
     if query.lower().startswith("create database"):

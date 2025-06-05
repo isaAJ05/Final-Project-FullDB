@@ -218,12 +218,10 @@ def executor(plan, stmt_type, query, data, stmt_info):
             if stmt_info["columns"] == ["*"]:
                 # Devuelve todas las columnas
                 result = [row for row in table_data["rows"]]
-                column_names = [col['name'] for col in table_data["columns"]]
             else:
                 result = [{col: row.get(col) for col in stmt_info["columns"]} for row in table_data["rows"]]
-                column_names = stmt_info["columns"]
-            query_cache[query] = {"columns": column_names, "rows": result}
-            return {"source": "executed", "columns": column_names, "rows": result}
+            query_cache[query] = {"columns": table_data["columns"], "rows": result}
+            return {"source": "executed", "columns": table_data["columns"], "rows": result}
     
     # CREATE DATABASE
     if query.lower().startswith("create database"):
@@ -279,48 +277,49 @@ def executor(plan, stmt_type, query, data, stmt_info):
         return {'message': f'Base de datos {db_name} eliminada'}
 
     # CREATE TABLE
-    if query.lower().startswith("create table"):
-        match = re.match(r"create table (\w+\.\w+|\w+)\s*\(([\s\S]+)\)", query, re.IGNORECASE)
-        if not match:
-            raise ValueError('Sintaxis inválida para CREATE TABLE')
-        full_table, columns = match.groups()
-        db, table = parse_db_table(full_table)
-        if not db or not is_valid_name(db) or not is_valid_name(table):
-            raise ValueError('Nombre de base de datos o tabla inválido')
-        # Tipos permitidos
-        allowed_types = [
-            'INT', 'BIGINT', 'DECIMAL', 'FLOAT', 'NUMERIC',
-            'VARCHAR', 'CHAR', 'TEXT', 'NVARCHAR',
-            'DATE', 'DATETIME', 'TIMESTAMP',
-            'BIT',
-            'BLOB', 'VARBINARY',
-            'JSON', 'XML', 'GEOMETRY'
-        ]
-        columns_list = []
-        for col_def in columns.replace('\n', '').split(','):
-            col_def = col_def.strip().strip(',')
-            if not col_def:
-                continue
-            parts = col_def.split()
-            if len(parts) < 2:
-                raise ValueError('Cada columna debe tener nombre y tipo, por ejemplo: id INT')
-            col_name = parts[0]
-            col_type = ' '.join(parts[1:]).upper()
-            # Permitir tipos con parámetros, como VARCHAR(50)
-            base_type = re.match(r'^\w+', col_type)
-            if not is_valid_name(col_name):
-                raise ValueError(f'Nombre de columna inválido: {col_name}')
-            if not base_type or base_type.group(0) not in allowed_types:
-                raise ValueError(f'Tipo de columna no soportado: {col_type}')
-            columns_list.append({"name": col_name, "type": col_type})
-        if len(set(col['name'] for col in columns_list)) != len(columns_list):
-            raise ValueError('No puede haber columnas repetidas')
-        table_path = os.path.join(DATA_DIR, db, f"{table}.json")
-        if os.path.exists(table_path):
-            raise ValueError(f'La tabla {table} ya existe en base {db}')
-        save_table(db, table, {"columns": columns_list, "rows": []})
-        query_cache.clear()
-        return {'message': f'Tabla {table} creada en base {db} con columnas {columns_list}'}
+    # ...existing code...
+if query.lower().startswith("create table"):
+    match = re.match(r"create table (\w+\.\w+|\w+)\s*\(([\s\S]+)\)", query, re.IGNORECASE)
+    if not match:
+        raise ValueError('Sintaxis inválida para CREATE TABLE')
+    full_table, columns = match.groups()
+    db, table = parse_db_table(full_table)
+    if not db or not is_valid_name(db) or not is_valid_name(table):
+        raise ValueError('Nombre de base de datos o tabla inválido')
+    # Tipos permitidos
+    allowed_types = [
+        'INT', 'BIGINT', 'DECIMAL', 'FLOAT', 'NUMERIC',
+        'VARCHAR', 'CHAR', 'TEXT', 'NVARCHAR',
+        'DATE', 'DATETIME', 'TIMESTAMP',
+        'BIT',
+        'BLOB', 'VARBINARY',
+        'JSON', 'XML', 'GEOMETRY'
+    ]
+    columns_list = []
+    for col_def in columns.replace('\n', '').split(','):
+        col_def = col_def.strip().strip(',')
+        if not col_def:
+            continue
+        parts = col_def.split()
+        if len(parts) < 2:
+            raise ValueError('Cada columna debe tener nombre y tipo, por ejemplo: id INT')
+        col_name = parts[0]
+        col_type = ' '.join(parts[1:]).upper()
+        # Permitir tipos con parámetros, como VARCHAR(50)
+        base_type = re.match(r'^\w+', col_type)
+        if not is_valid_name(col_name):
+            raise ValueError(f'Nombre de columna inválido: {col_name}')
+        if not base_type or base_type.group(0) not in allowed_types:
+            raise ValueError(f'Tipo de columna no soportado: {col_type}')
+        columns_list.append({"name": col_name, "type": col_type})
+    if len(set(col['name'] for col in columns_list)) != len(columns_list):
+        raise ValueError('No puede haber columnas repetidas')
+    table_path = os.path.join(DATA_DIR, db, f"{table}.json")
+    if os.path.exists(table_path):
+        raise ValueError(f'La tabla {table} ya existe en base {db}')
+    save_table(db, table, {"columns": columns_list, "rows": []})
+    query_cache.clear()
+    return {'message': f'Tabla {table} creada en base {db} con columnas {columns_list}'}
 
 
     # DROP TABLE
@@ -373,46 +372,16 @@ def executor(plan, stmt_type, query, data, stmt_info):
         table_data = load_table(db, table)
         if not table_data:
             raise ValueError(f'Tabla {table} no existe en base {db}')
-        # Validar columnas
-        table_columns = [col['name'] for col in table_data["columns"]]
-        if set(columns) != set(table_columns):
-            raise ValueError('Debes insertar todas las columnas de la tabla y en el mismo orden')
-        # Validar tipos
-        for i, col in enumerate(table_data["columns"]):
-            col_name = col["name"]
-            col_type = col["type"].upper()
-            val = values[i]
-            base_type = re.match(r'^([A-Z]+)', col_type).group(1)
-            if base_type in ['INT', 'BIGINT']:
-                if not re.match(r'^-?\d+$', val):
-                    raise ValueError(f'El valor para {col_name} debe ser un entero')
-            elif base_type in ['DECIMAL', 'FLOAT', 'NUMERIC']:
-                if not re.match(r'^-?\d+(\.\d+)?$', val):
-                    raise ValueError(f'El valor para {col_name} debe ser numérico')
-            elif base_type in ['BIT']:
-                if val not in ['0', '1', 'True', 'False', 'true', 'false']:
-                    raise ValueError(f'El valor para {col_name} debe ser booleano (0/1 o True/False)')
-            elif base_type in ['DATE', 'DATETIME', 'TIMESTAMP']:
-                try:
-                    datetime.datetime.fromisoformat(val)
-                except Exception:
-                    raise ValueError(f'El valor para {col_name} debe ser una fecha válida (YYYY-MM-DD o similar)')
-            elif base_type in ['VARCHAR', 'CHAR', 'NVARCHAR']:
-                # Extraer longitud si existe, por ejemplo VARCHAR(20)
-                length_match = re.search(r'\((\d+)\)', col_type)
-                if length_match:
-                    max_len = int(length_match.group(1))
-                    if len(val) > max_len:
-                        raise ValueError(f'El valor para {col_name} excede la longitud máxima de {max_len} caracteres')
-                if base_type == 'CHAR' and length_match:
-                    if len(val) != max_len:
-                        raise ValueError(f'El valor para {col_name} debe tener exactamente {max_len} caracteres')
+        for col in columns:
+            if col not in table_data["columns"]:
+                raise ValueError(f'Columna {col} no existe en la tabla {table}')
+        if len(columns) != len(table_data["columns"]):
+            raise ValueError('Debes insertar todas las columnas de la tabla')
         row = dict(zip(columns, values))
         table_data["rows"].append(row)
         save_table(db, table, table_data)
         query_cache.clear()
         return {'message': f'Dato insertado en {table} de {db}', 'row': row}
-
 
     # UPDATE
     if query.lower().startswith("update"):

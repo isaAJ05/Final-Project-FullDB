@@ -218,12 +218,10 @@ def executor(plan, stmt_type, query, data, stmt_info):
             if stmt_info["columns"] == ["*"]:
                 # Devuelve todas las columnas
                 result = [row for row in table_data["rows"]]
-                column_names = [col['name'] for col in table_data["columns"]]
             else:
                 result = [{col: row.get(col) for col in stmt_info["columns"]} for row in table_data["rows"]]
-                column_names = stmt_info["columns"]
-            query_cache[query] = {"columns": column_names, "rows": result}
-            return {"source": "executed", "columns": column_names, "rows": result}
+            query_cache[query] = {"columns": table_data["columns"], "rows": result}
+            return {"source": "executed", "columns": table_data["columns"], "rows": result}
     
     # CREATE DATABASE
     if query.lower().startswith("create database"):
@@ -359,6 +357,7 @@ def executor(plan, stmt_type, query, data, stmt_info):
         query_cache.clear()
         return {'message': f'Tabla {table} renombrada a {table_new} en base {db}'}
 
+    # ...existing code...
     # INSERT
     if query.lower().startswith("insert into"):
         match = re.match(r"insert into (\w+\.\w+|\w+)\s*\(([\s\S]+?)\)\s*values\s*\(([\s\S]+?)\)", query, re.IGNORECASE)
@@ -397,16 +396,7 @@ def executor(plan, stmt_type, query, data, stmt_info):
                     datetime.datetime.fromisoformat(val)
                 except Exception:
                     raise ValueError(f'El valor para {col_name} debe ser una fecha válida (YYYY-MM-DD o similar)')
-            elif base_type in ['VARCHAR', 'CHAR', 'NVARCHAR']:
-                # Extraer longitud si existe, por ejemplo VARCHAR(20)
-                length_match = re.search(r'\((\d+)\)', col_type)
-                if length_match:
-                    max_len = int(length_match.group(1))
-                    if len(val) > max_len:
-                        raise ValueError(f'El valor para {col_name} excede la longitud máxima de {max_len} caracteres')
-                if base_type == 'CHAR' and length_match:
-                    if len(val) != max_len:
-                        raise ValueError(f'El valor para {col_name} debe tener exactamente {max_len} caracteres')
+            # Para VARCHAR, CHAR, TEXT, NVARCHAR, BLOB, VARBINARY, JSON, XML, GEOMETRY no se valida formato aquí
         row = dict(zip(columns, values))
         table_data["rows"].append(row)
         save_table(db, table, table_data)
