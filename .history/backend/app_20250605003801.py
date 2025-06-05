@@ -495,7 +495,7 @@ def execute_sql():
         plan = optimizer(stmt_type, query)
         # 4. Executor
         result = executor(plan, stmt_type, query, data, stmt_info)
-        print("Data:", result)
+        print("QUERY:", query)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 400
