@@ -124,7 +124,24 @@ function App() {
   // Mensajes temporales en el output con desvanecido
   const [fadeError, setFadeError] = useState(false);
   const [fadeSuccess, setFadeSuccess] = useState(false);
+  const [lightTheme, setLightTheme] = useState(() => {
+    // Persistencia opcional: lee del localStorage si existe
+    const saved = localStorage.getItem("lightTheme");
+    return saved === "true";
+  });
+  const [showUserPanel, setShowUserPanel] = useState(false);
 
+  // Efecto para aplicar el tema claro/oscuro
+  useEffect(() => {
+    const root = document.body;
+    if (lightTheme) {
+      root.classList.add("light-theme");
+    } else {
+      root.classList.remove("light-theme");
+    }
+    // Persistencia opcional
+    localStorage.setItem("lightTheme", lightTheme);
+  }, [lightTheme]);
 
   // Obtener bases de datos al montar
   useEffect(() => {
@@ -432,53 +449,151 @@ useEffect(() => {
               style={{ background: 'none', color: '#75baff', border: 'none', marginTop: 8, cursor: 'pointer', textDecoration: 'underline', fontSize: 15 }}
               onClick={() => {
                 setRegisterAnim("hide-register");
-              }}
+                }}
+              >
+                Cancelar
+              </button>
+              </form>
+            )}
+            </div>
+            <div className={`app-container${loginFade || !isLoggedIn ? '' : ' main-fade-in'}${isHistoryOpen ? ' history-open' : ''}`}
+            style={{
+              opacity: loginFade || !isLoggedIn ? 0 : 1,
+              pointerEvents: loginFade || !isLoggedIn ? 'none' : 'auto',
+              transition: 'opacity 0.7s cubic-bezier(0.4,0,0.2,1)',
+              position: 'relative',
+              zIndex: 1
+            }}
             >
-              Cancelar
-            </button>
-          </form>
-        )}
-      </div>
-      <div className={`app-container${loginFade || !isLoggedIn ? '' : ' main-fade-in'}${isHistoryOpen ? ' history-open' : ''}`}
-        style={{
-          opacity: loginFade || !isLoggedIn ? 0 : 1,
-          pointerEvents: loginFade || !isLoggedIn ? 'none' : 'auto',
-          transition: 'opacity 0.7s cubic-bezier(0.4,0,0.2,1)',
-          position: 'relative',
-          zIndex: 1
-        }}
-      >
-        <nav className="navbar">
-          <button
-            className="toggle-history-btn"
-            onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-          >
-            {isHistoryOpen ? "✖" : "☰"}
-          </button>
-          <h1>Consultas SQL</h1>
-        </nav>
+            <nav className="navbar">
+              <button
+              className="toggle-history-btn"
+              onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+              >
+              {isHistoryOpen ? "✖" : "☰"}
+              </button>
+              <h1>Consultas SQL</h1>
+              <button
+                style={{
+                  marginLeft: "auto",
+                  background: lightTheme ? "#fff" : "#181c27",
+                  color: lightTheme ? "#23263a" : "#fff",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: 8,
+                  fontWeight: 600,
+                  fontSize: 18,
+                  cursor: "pointer",
+                  boxShadow: "none",
+                  transition: "background 0.3s, color 0.3s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+                onClick={() => setLightTheme((v) => !v)}
+                title={lightTheme ? "Cambiar a tema oscuro" : "Cambiar a tema claro"}
+              >
+                {lightTheme ? (
+                  // Moon icon SVG
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 1 0 9.79 9.79z"/></svg>
+                ) : (
+                  // Sun icon SVG
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                )}
+              </button>
+              <button
+                style={{
+                  marginLeft: 12,
+                  background: lightTheme ? "#fff" : "#181c27",
+                  color: lightTheme ? "#23263a" : "#fff",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: 8,
+                  fontWeight: 600,
+                  fontSize: 18,
+                  cursor: "pointer",
+                  boxShadow: "none",
+                  transition: "background 0.3s, color 0.3s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative"
+                }}
+                onClick={() => setShowUserPanel(v => !v)}
+                title="Usuario"
+              >
+                {/* Person icon SVG */}
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/></svg>
+              </button>
+              {/* User panel dropdown */}
+              {showUserPanel && (
+                <div style={{
+                  position: "absolute",
+                  top: 48,
+                  right: 0,
+                  background: lightTheme ? "#fff" : "#181c27",
+                  color: lightTheme ? "#23263a" : "#fff",
+                  border: `1.5px solid ${lightTheme ? '#9b0018' : '#fff'}`,
+                  borderRadius: 8,
+                  boxShadow: "0 4px 24px #000a",
+                  minWidth: 180,
+                  zIndex: 100,
+                  padding: 18,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                  animation: "fadeInMain 0.3s"
+                }}>
+                  <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/></svg>
+                    {loginUser || 'Invitado'}
+                  </div>
+                  <button
+                    style={{
+                      background: '#9b0018',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 6,
+                      padding: '8px 0',
+                      fontWeight: 600,
+                      fontSize: 15,
+                      cursor: 'pointer',
+                      transition: 'background 0.2s'
+                    }}
+                    onClick={() => {
+                      setIsLoggedIn(false);
+                      setShowUserPanel(false);
+                      setLoginUser("");
+                      setLoginPass("");
+                    }}
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
+            </nav>
 
-        <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
-          {/* Título principal */}
-          <div style={{ color: "#fff", marginBottom: 30 }}>
-          <h1 style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span>🖥️</span>
-            localhost
-            <button
-              style={{
-                background: "none",
-                border: "none",
-                color: "#fff",
-                cursor: "pointer",
-                padding: 4,
-                borderRadius: "50%",
-                transition: "background 0.2s",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-              title="Refrescar bases de datos"
-              onClick={() => {
+            <aside className={`side-menu ${isHistoryOpen ? "open" : ""}`}>
+              {/* Título principal */}
+              <div style={{ color: lightTheme ? "#23263a" : "#fff", marginBottom: 30 }}>
+              <h1 style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span>🖥️</span>
+                <span style={{ color: lightTheme ? "#23263a" : "#fff", transition: "color 0.3s" }}>localhost</span>
+                <button
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: lightTheme ? "#23263a" : "#fff",
+                  cursor: "pointer",
+                  padding: 4,
+                  borderRadius: "50%",
+                  transition: "background 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+                title="Refrescar bases de datos"
+                onClick={() => {
                 fetch('http://127.0.0.1:5000/databases')
                   .then(res => res.json())
                   .then(data => setDatabases(data.databases || []))

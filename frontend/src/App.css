@@ -59,6 +59,7 @@
 }
 .side-menu.open {
   transform: translateX(0);
+  animation: sidebarBounceGlowIn 0.7s cubic-bezier(0.68,-0.55,0.27,1.55);
 }
 
 .side-menu h3 {
@@ -128,6 +129,23 @@
   border-radius: 8px;
   padding: 10px;
   box-sizing: border-box;
+}
+
+/* Gutter (línea de números) y resaltado SOLO en tema claro */
+.light-theme .sql-editor-container .cm-gutters {
+  background: #f0f0f5 !important;
+  color: #888 !important;
+  border-right: 1.5px solid #e0e0e0 !important;
+}
+
+.light-theme .sql-editor-container .cm-activeLine {
+  background: #eaeaea !important;
+}
+
+.light-theme .sql-editor-container .cm-gutterElement.cm-activeLineGutter {
+  background: #eaeaea !important;
+  color: #23263a !important;
+  font-weight: bold;
 }
 
 /* Asegura que el gutter siempre tenga espacio para al menos 10 líneas */
@@ -582,4 +600,185 @@
 }
 @keyframes fadeOutMsg {
   to { opacity: 0; }
+}
+
+/* Animación de entrada para el sidebar mejorada */
+@keyframes sidebarBounceGlowIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-60px) scale(0.92);
+    box-shadow: 0 0 0 0 #ff174455;
+    filter: blur(8px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(10px) scale(1.04);
+    box-shadow: 0 0 32px 8px #ff174455;
+    filter: blur(1.5px);
+  }
+  80% {
+    transform: translateX(-4px) scale(0.98);
+    box-shadow: 0 0 16px 4px #9b001855;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    box-shadow: 0 0 8px 0 #9b001822;
+    filter: blur(0);
+  }
+}
+
+/* --- SMOOTH THEME TRANSITIONS --- */
+body, .app-container, .navbar, .side-menu, .main-content, .results-panel, .errors-panel, .modal, .sql-editor-container .cm-editor, .left-panel, .right-panel {
+  transition: 
+    background 0.7s cubic-bezier(0.4,0,0.2,1),
+    background-color 0.7s cubic-bezier(0.4,0,0.2,1),
+    color 0.7s cubic-bezier(0.4,0,0.2,1),
+    border-color 0.7s cubic-bezier(0.4,0,0.2,1),
+    box-shadow 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Navbar smooth transition for background gradient */
+.navbar {
+  transition: background 0.7s cubic-bezier(0.4,0,0.2,1), color 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* For CodeMirror gutter and highlights */
+.sql-editor-container .cm-gutters,
+.light-theme .sql-editor-container .cm-gutters,
+.light-theme .sql-editor-container .cm-activeLine,
+.light-theme .sql-editor-container .cm-gutterElement.cm-activeLineGutter {
+  transition: background 0.7s cubic-bezier(0.4,0,0.2,1), color 0.7s cubic-bezier(0.4,0,0.2,1), border-color 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Table cells and headers */
+.results-panel th, .results-panel td, .light-theme .results-panel th, .light-theme .results-panel td {
+  transition: background 0.7s cubic-bezier(0.4,0,0.2,1), color 0.7s cubic-bezier(0.4,0,0.2,1), border-color 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Sidebar smooth transition for box-shadow and border */
+.side-menu, .light-theme .side-menu {
+  transition: background 0.7s cubic-bezier(0.4,0,0.2,1), color 0.7s cubic-bezier(0.4,0,0.2,1), border-color 0.7s cubic-bezier(0.4,0,0.2,1), box-shadow 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Modal smooth transition */
+.modal, .light-theme .modal {
+  transition: background 0.7s cubic-bezier(0.4,0,0.2,1), color 0.7s cubic-bezier(0.4,0,0.2,1), border-color 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Tema claro */
+body.light-theme, .app-container.light-theme {
+  background-color: #e5e6ea !important; /* blanco grisáceo más oscuro */
+  color: #23263a !important;
+}
+
+.light-theme .side-menu {
+  background-color: #fff !important;
+  color: #23263a !important;
+  border-right: 2px solid #e0e0e0;
+  box-shadow: 4px 0 24px 0 #000a; /* sombra oscura */
+}
+
+.light-theme .side-menu h3 {
+  color: #23263a !important;
+  border-bottom: 1.5px solid #f7b2b2;
+  text-shadow: none;
+}
+
+.light-theme .main-content {
+  background: radial-gradient(ellipse, #e5e6ea 10%, #f3f3f6 100%) !important;
+  border-top: 1px solid #e0e0e0;
+}
+
+.light-theme .results-panel {
+  background-color: #fff !important;
+  color: #23263a !important;
+  border: 1px solid #f7b2b2;
+  box-shadow: 0 0 8px #f7b2b222;
+}
+.light-theme .results-panel th {
+  background-color: #f7e0e0 !important;
+  color: #23263a !important;
+}
+.light-theme .results-panel td {
+  color: #23263a !important;
+}
+
+.light-theme .errors-panel {
+  background-color: #fff !important;
+  color: #b8001e !important;
+  border: 1px solid #f7b2b2;
+}
+
+.light-theme .sql-editor-container .cm-editor {
+  background-color: #fff !important;
+  color: #23263a !important;
+  border: 1px solid #f7b2b2;
+}
+
+.light-theme .cm-keyword {
+  color: #b8001e !important;
+}
+.light-theme .cm-string {
+  color: #e67e22 !important;
+}
+.light-theme .cm-comment {
+  color: #888888 !important;
+}
+
+.light-theme .modal {
+  background: #fff !important;
+  color: #23263a !important;
+  border: 2px solid #f7b2b2;
+}
+.light-theme .modal h3,
+.light-theme .modal label {
+  color: #23263a !important;
+}
+.light-theme .modal input,
+.light-theme .modal select,
+.light-theme .modal textarea {
+  background: #f7f7fa !important;
+  color: #23263a !important;
+  border: 1px solid #e0e0e0 !important;
+}
+.light-theme .modal input:focus,
+.light-theme .modal select:focus,
+.light-theme .modal textarea:focus {
+  border: 2px solid #f7b2b2 !important;
+  box-shadow: 0 0 0 2px #f7b2b255 !important;
+}
+
+/* Scrollbar claro */
+.light-theme .side-menu::-webkit-scrollbar-thumb,
+.light-theme .results-panel::-webkit-scrollbar-thumb {
+  background: #f7b2b2 !important;
+}
+.light-theme .side-menu::-webkit-scrollbar-track,
+.light-theme .results-panel::-webkit-scrollbar-track {
+  background: #f7f7fa !important;
+}
+
+.light-theme .side-menu .sidebar-host {
+  color: #111 !important;
+}
+
+/* Animación del icono de tema */
+.theme-anim {
+  animation: themeIconAnim 0.9s cubic-bezier(0.4,0,0.2,1) !important;
+  display: inline-flex;
+}
+@keyframes themeIconAnim {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.6) rotate(-40deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.18) rotate(15deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
 }
