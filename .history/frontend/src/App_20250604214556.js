@@ -132,9 +132,10 @@ function App() {
   const [showUserPanel, setShowUserPanel] = useState(false);
   // Estado para animación de fade del panel de usuario
   const [userPanelFade, setUserPanelFade] = useState(false);
-  // Para cargar columnas de una tabla
+  // Agrega estos estados al inicio de tu componente App
   const [selectedTableColumns, setSelectedTableColumns] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
+  const [selectedDb, setSelectedDb] = useState(null);
 
 // Función para cargar columnas de una tabla
 const handleShowColumns = (db, table) => {
@@ -637,23 +638,8 @@ useEffect(() => {
                     setTablesByDb(prev => ({ ...prev, [expandedDb]: [] }));
                     setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
                   });
-                  // Si hay una tabla seleccionada, refresca sus columnas
-                    if (selectedDb && selectedTable) {
-                      fetch(`http://127.0.0.1:5000/columns?db=${selectedDb}&table=${selectedTable}`)
-                        .then(res => res.json())
-                        .then(data => {
-                          setSelectedTableColumns(data.columns || []);
-                        })
-                        .catch(() => {
-                          setSelectedTableColumns([]);
-                        });
-                    } else {
-                      // Si no hay tabla seleccionada, limpia columnas
-                      setSelectedTableColumns([]);
-                      setSelectedTable(null);
-                      setSelectedDb(null);
-                    }
-                  }}
+                
+              }}
               onMouseOver={e => e.currentTarget.style.background = "#23263a"}
               onMouseOut={e => e.currentTarget.style.background = "none"}
             >
@@ -717,40 +703,27 @@ useEffect(() => {
                     {loadingTables[db] ? (
                       <p style={{ fontSize: "0.9em" }}>Cargando tablas...</p>
                     ) : tablesByDb[db] && tablesByDb[db].length > 0 ? (
-                          tablesByDb[db].map((table) => (
-                            <div key={table}>
-                              <button
-                                className="history-btn"
-                                style={{
-                                  fontSize: "0.95em",
-                                  background: "#23263a",
-                                  margin: "3px 0",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 6
-                                }}
-                                title={`Ver columnas de ${table}`}
-                                onClick={() => handleShowColumns(db, table)}
-                              >
-                                <span style={{ fontSize: 15 }}>🗒️</span>
-                                {table}
-                              </button>
-                              {/* Mostrar columnas si esta tabla está seleccionada */}
-                              {selectedTable === table && selectedDb === db && selectedTableColumns.length > 0 && (
-                                <ul style={{ margin: "4px 0 4px 24px", padding: 0, color: "#bfc7d5", fontSize: "0.97em" }}>
-                                  {selectedTableColumns.map(col => (
-                                    <li key={col.name} style={{ listStyle: "disc", marginLeft: 12 }}>
-                                      <span style={{ color: "#fff" }}>{col.name}</span>
-                                      <span style={{ color: "#9b0018", marginLeft: 6, fontSize: "0.95em" }}>{col.type}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
-                          ))
-                        ) : (
-                          <p style={{ fontSize: "0.9em" }}>No hay tablas.</p>
-                        )}
+                      tablesByDb[db].map((table) => (
+                        <button
+                          key={table}
+                          className="history-btn"
+                          style={{
+                            fontSize: "0.95em",
+                            background: "#23263a",
+                            margin: "3px 0",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6
+                          }}
+                          title={`Ver tablas de ${db}`}
+                        >
+                          <span style={{ fontSize: 15 }}>🗒️</span>
+                          {table}
+                        </button>
+                      ))
+                    ) : (
+                      <p style={{ fontSize: "0.9em" }}>No hay tablas.</p>
+                    )}
                   </div>
                 )}
 

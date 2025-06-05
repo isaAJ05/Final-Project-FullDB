@@ -560,16 +560,7 @@ def list_tables():
     tables = [f[:-5] for f in os.listdir(db_path) if f.endswith('.json') and f != "backups"]
     return jsonify({'tables': tables})
 
-@app.route('/columns', methods=['GET'])
-def get_columns():
-    db = request.args.get('db')
-    table = request.args.get('table')
-    if not db or not table:
-        return jsonify({'error': 'Faltan parámetros'}), 400
-    table_data = load_table(db, table)
-    if not table_data or "columns" not in table_data:
-        return jsonify({'error': 'Tabla no encontrada'}), 404
-    return jsonify({'columns': table_data["columns"]})
+
 
 # ==========================
 # ENDPOINTS EXTRA

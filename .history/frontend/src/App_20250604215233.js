@@ -637,23 +637,20 @@ useEffect(() => {
                     setTablesByDb(prev => ({ ...prev, [expandedDb]: [] }));
                     setLoadingTables(prev => ({ ...prev, [expandedDb]: false }));
                   });
-                  // Si hay una tabla seleccionada, refresca sus columnas
-                    if (selectedDb && selectedTable) {
-                      fetch(`http://127.0.0.1:5000/columns?db=${selectedDb}&table=${selectedTable}`)
-                        .then(res => res.json())
-                        .then(data => {
-                          setSelectedTableColumns(data.columns || []);
-                        })
-                        .catch(() => {
-                          setSelectedTableColumns([]);
-                        });
-                    } else {
-                      // Si no hay tabla seleccionada, limpia columnas
-                      setSelectedTableColumns([]);
-                      setSelectedTable(null);
-                      setSelectedDb(null);
-                    }
-                  }}
+                  fetch(`http://127.0.0.1:5000/columns?db=${db}&table=${table}`)
+                .then(res => res.json())
+                .then(data => {
+                  setSelectedTableColumns(data.columns || []);
+                  setSelectedTable(table);
+                  setSelectedDb(db);
+                })
+                .catch(() => {
+                  setSelectedTableColumns([]);
+                  setSelectedTable(table);
+                  setSelectedDb(db);
+                });
+                
+              }}
               onMouseOver={e => e.currentTarget.style.background = "#23263a"}
               onMouseOut={e => e.currentTarget.style.background = "none"}
             >
