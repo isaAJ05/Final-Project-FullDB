@@ -1058,16 +1058,28 @@ useEffect(() => {
               </div>
 
               <div className="errors-panel">
-              {error ? (
-                <div className={`message-error${fadeError ? ' fade-out-msg' : ''} fade-in-msg`}>{error}</div>
-              ) : result && result.source === "cache" ? (
-                <div className="message-success" style={{ background: "#23263a", color: "#00e676", fontWeight: 600 }}>
-                  Resultado obtenido del cache
-                </div>
-              ) : (result && result.message ? (
-                <div className={`message-success${fadeSuccess ? ' fade-out-msg' : ''} fade-in-msg`}>{result.message}</div>
-              ) : null)}
-            </div>
+                {error ? (
+                  <div className={`message-error${fadeError ? ' fade-out-msg' : ''} fade-in-msg`}>{error}</div>
+                ) : result && (result.rows_affected !== undefined || result.execution_time !== undefined || result.source === "cache") ? (
+                  <div className="message-success fade-in-msg" style={result.source === "cache" ? { background: "#23263a", color: "#00e676", fontWeight: 600 } : {}}>
+                    {result.source === "cache" && (
+                      <span>Resultado obtenido del cache<br /></span>
+                    )}
+                    {result.rows_affected !== undefined && (
+                      <span>{result.rows_affected} filas afectadas<br /></span>
+                    )}
+                    {result.execution_time !== undefined && (
+                      <span>Tiempo de ejecución: {result.execution_time.toFixed(4)} s</span>
+                    )}
+                    {result.message && (
+                      <><br />{result.message}</>
+                    )}
+                  </div>
+                ) : result && result.message ? (
+                  <div className={`message-success fade-in-msg`}>{result.message}</div>
+                ) : null}
+              </div>
+
             </div>
           </div>
         </div>

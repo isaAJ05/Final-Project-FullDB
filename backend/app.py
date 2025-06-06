@@ -3,6 +3,7 @@
 # ==========================
 from flask import Flask, request, redirect, session, jsonify
 import sqlglot
+import time
 import json
 import os
 import re
@@ -552,6 +553,7 @@ def execute_sql():
     data = request.json
     query = data.get('query', '').strip()
     try:
+        tiempo_inicio = time.time() # TIEMPO INICIO
         # 1. Parser
         stmt = parser(query)
         # 2. Algebrizer
@@ -563,7 +565,26 @@ def execute_sql():
         plan = optimizer(stmt_type, query)
         # 4. Executor
         result = executor(plan, stmt_type, query, data, stmt_info)
+        tiempo_ejecucion = time.time()-tiempo_inicio
         print("Data:", result)
+        result['execution_time'] = tiempo_ejecucion # TIEMPO DE EJECUCIÓN
+
+        # FILAS AFECTADAS
+        if "rows" in result and isinstance(result["rows"], list):
+            result["rows_affected"] = len(result["rows"])
+        elif "message" in result and "filas" in result["message"]:
+            import re
+            match = re.search(r'(\d+)\s+filas?', result["message"])
+            if match:
+                result["rows_affected"] = int(match.group(1))
+        filas_afectadas = result.get("rows_affected", 0)
+        if filas_afectadas is None:
+            filas_afectadas = 0
+
+        result["rows_affected"] = filas_afectadas = result.get("rows_affected", 0)
+        print(f"Consulta ejecutada en {tiempo_ejecucion:.4f} segundos") # IMPRIMIR TIEMPO DE EJECUCIÓN
+        print(f"{filas_afectadas}") # IMPRIMIR FILAS AFECTADAS
+
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 400
