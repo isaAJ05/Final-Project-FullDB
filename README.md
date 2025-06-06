@@ -1,5 +1,26 @@
 This will be our readme
 Acerca del Frontend
+
+# TO RUN THE PROJECT
+
+npm start
+
+# IN CASE IT DOESN'T WORK
+
+npm install
+
+pip install flask
+pip install sqlglot
+pip install flask-cors
+pip install google-auth-oauthlib
+pip install google-api-python-client
+pip install google-api-python-client
+
+If necessary:
+Execute Windows PowerShell as administrator
+-> Set-ExecutionPolicy RemoteSigned -> Yes
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
